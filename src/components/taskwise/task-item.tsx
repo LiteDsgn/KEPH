@@ -15,7 +15,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { MoreHorizontal, Trash2, Archive, Circle, CheckCircle2, Edit, Link as LinkIcon, NotebookText, CalendarDays } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { format, formatDistanceToNow, isPast, isToday } from 'date-fns';
+import { format, isPast, isToday } from 'date-fns';
 import { EditTaskForm } from './edit-task-form';
 import { Progress } from '../ui/progress';
 
@@ -140,20 +140,17 @@ export function TaskItem({ task, onUpdate, onDelete }: TaskItemProps) {
                 ))}
               </div>
             )}
-            <div className="flex items-center justify-between pt-1 text-xs text-muted-foreground">
-                {task.dueDate ? (
-                    <div className={cn(
-                        "flex items-center gap-1.5",
-                        task.status !== 'completed' && isPast(task.dueDate) && !isToday(task.dueDate) ? "text-destructive" : ""
-                    )}>
-                        <CalendarDays className="h-3.5 w-3.5" />
-                        <span>{format(task.dueDate, 'MMM d')}</span>
-                    </div>
-                ) : <div />}
-                <p>
-                    {formatDistanceToNow(task.createdAt, { addSuffix: true })}
-                </p>
-            </div>
+            {task.dueDate && (
+              <div className="flex items-center pt-1 text-xs text-muted-foreground">
+                  <div className={cn(
+                      "flex items-center gap-1.5",
+                      task.status !== 'completed' && isPast(task.dueDate) && !isToday(task.dueDate) ? "text-destructive" : ""
+                  )}>
+                      <CalendarDays className="h-3.5 w-3.5" />
+                      <span>{format(task.dueDate, 'MMM d')}</span>
+                  </div>
+              </div>
+            )}
           </div>
 
           <DropdownMenu>

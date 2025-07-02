@@ -7,6 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { TaskItem } from './task-item';
 import { Search, Circle, CheckCircle2, Archive } from 'lucide-react';
+import { formatDistanceToNow } from 'date-fns';
 
 interface TaskListProps {
   tasks: Task[];
@@ -43,15 +44,21 @@ export function TaskList({ tasks, onUpdateTask, onDeleteTask, search, setSearch 
       );
     }
     return (
-      <div className="space-y-3">
+      <div className="space-y-4">
         {sortTasks(tasksToRender)
         .map((task) => (
-          <TaskItem
-            key={task.id}
-            task={task}
-            onUpdate={onUpdateTask}
-            onDelete={onDeleteTask}
-          />
+          <div key={task.id} className="flex items-start gap-4">
+            <div className="flex-grow">
+                <TaskItem
+                    task={task}
+                    onUpdate={onUpdateTask}
+                    onDelete={onDeleteTask}
+                />
+            </div>
+            <p className="text-xs text-muted-foreground pt-2 whitespace-nowrap">
+              {formatDistanceToNow(task.createdAt, { addSuffix: true })}
+            </p>
+          </div>
         ))}
       </div>
     );
