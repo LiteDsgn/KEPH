@@ -24,6 +24,10 @@ const formSchema = z.object({
     .string()
     .min(20, { message: 'Please enter a transcript of at least 20 characters.' })
     .max(200000, { message: 'Transcript cannot exceed 200,000 characters.' }),
+  instructions: z
+    .string()
+    .max(500, { message: 'Instructions cannot exceed 500 characters.' })
+    .optional(),
 });
 
 interface TranscriptToTasksFormProps {
@@ -38,13 +42,14 @@ export function TranscriptToTasksForm({ onTasksCreated }: TranscriptToTasksFormP
     resolver: zodResolver(formSchema),
     defaultValues: {
       transcript: '',
+      instructions: '',
     },
   });
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsSubmitting(true);
     try {
-      const result = await transcriptToTasks({ transcript: values.transcript });
+      const result = await transcriptToTasks(values);
       onTasksCreated(result.tasks);
       form.reset();
     } catch (error) {
@@ -77,6 +82,26 @@ export function TranscriptToTasksForm({ onTasksCreated }: TranscriptToTasksFormP
               </FormControl>
               <FormDescription>
                 The AI will identify action items and create tasks.
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="instructions"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Instructions (Optional)</FormLabel>
+              <FormControl>
+                <Textarea
+                  placeholder="e.g., Prioritize tasks for the design team, focus on action items assigned to John."
+                  {...field}
+                  rows={3}
+                />
+              </FormControl>
+              <FormDescription>
+                Guide the AI on what to focus on when creating tasks.
               </FormDescription>
               <FormMessage />
             </FormItem>

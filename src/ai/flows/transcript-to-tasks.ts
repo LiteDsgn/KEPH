@@ -13,6 +13,7 @@ import {z} from 'genkit';
 
 const TranscriptToTasksInputSchema = z.object({
   transcript: z.string().describe('The meeting transcript to extract tasks from.'),
+  instructions: z.string().optional().describe('Optional instructions for the AI on how to process the transcript.'),
 });
 export type TranscriptToTasksInput = z.infer<typeof TranscriptToTasksInputSchema>;
 
@@ -33,6 +34,11 @@ const prompt = ai.definePrompt({
 
   Given the following meeting transcript, identify the tasks that need to be done and create a todo list.
   Format the output as a JSON array of strings.
+
+  {{#if instructions}}
+  Please follow these instructions when creating the tasks:
+  {{instructions}}
+  {{/if}}
 
   Transcript:
   {{transcript}}`,
