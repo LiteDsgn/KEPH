@@ -4,3 +4,4 @@ config();
 import '@/ai/flows/voice-to-tasks.ts';
 import '@/ai/flows/text-to-tasks.ts';
 import '@/ai/flows/transcript-to-tasks.ts';
+import '@/ai/flows/generate-subtasks.ts';

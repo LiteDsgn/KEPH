@@ -93,6 +93,7 @@ export function TaskItem({ task, onUpdate, onDelete }: TaskItemProps) {
                                     id={`subtask-${subtask.id}`}
                                     checked={subtask.completed}
                                     onCheckedChange={(checked) => handleSubtaskCheck(subtask.id, !!checked)}
+                                    aria-label={`Mark subtask as ${subtask.completed ? 'not completed' : 'completed'}`}
                                 />
                                 <label
                                     htmlFor={`subtask-${subtask.id}`}
@@ -140,7 +141,7 @@ export function TaskItem({ task, onUpdate, onDelete }: TaskItemProps) {
                 <span className="sr-only">More options</span>
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
+            <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
                <DropdownMenuItem onClick={() => setIsEditDialogOpen(true)}>
                  <Edit className="mr-2 h-4 w-4" />
                  <span>Edit</span>

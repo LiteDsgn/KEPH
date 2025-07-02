@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -15,7 +16,10 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import type { Task } from '@/types';
-import { Loader2, X } from 'lucide-react';
+import { Loader2, X, Sparkles } from 'lucide-react';
+import { Separator } from '@/components/ui/separator';
+import { generateSubtasks } from '@/ai/flows/generate-subtasks';
+import { useToast } from '@/hooks/use-toast';
 
 const formSchema = z.object({
   title: z.string().min(1, 'Task title cannot be empty.'),
@@ -37,6 +41,10 @@ interface EditTaskFormProps {
 }
 
 export function EditTaskForm({ task, onSubmit, onCancel }: EditTaskFormProps) {
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [generationPrompt, setGenerationPrompt] = useState('');
+  const { toast } = useToast();
+
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -47,7 +55,7 @@ export function EditTaskForm({ task, onSubmit, onCancel }: EditTaskFormProps) {
     },
   });
 
-  const { fields, append, remove } = useFieldArray({
+  const { fields, append, remove, replace } = useFieldArray({
     control: form.control,
     name: 'subtasks',
   });
@@ -57,6 +65,53 @@ export function EditTaskForm({ task, onSubmit, onCancel }: EditTaskFormProps) {
   const handleSubmit = async (values: FormValues) => {
     await onSubmit(values);
     form.reset();
+  }
+
+  const handleGenerateSubtasks = async () => {
+    if (!generationPrompt.trim()) {
+        toast({
+            variant: 'destructive',
+            title: 'Prompt is empty',
+            description: 'Please describe the subtasks you want to generate.',
+        });
+        return;
+    }
+    setIsGenerating(true);
+    try {
+        const result = await generateSubtasks({
+            taskTitle: form.getValues('title'),
+            description: generationPrompt
+        });
+        
+        if (result.subtasks && result.subtasks.length > 0) {
+            const newSubtasks = result.subtasks.map(title => ({
+                id: crypto.randomUUID(),
+                title: title,
+                completed: false,
+            }));
+            replace(newSubtasks);
+            setGenerationPrompt('');
+            toast({
+                title: 'Subtasks Generated',
+                description: `${newSubtasks.length} subtasks have been added to your task.`
+            })
+        } else {
+            toast({
+                title: 'No Subtasks Generated',
+                description: 'The AI could not generate any subtasks from your prompt.'
+            })
+        }
+
+    } catch(error) {
+        console.error("Error generating subtasks:", error);
+        toast({
+            variant: 'destructive',
+            title: 'Generation Failed',
+            description: 'An error occurred while generating subtasks. Please try again.',
+        });
+    } finally {
+        setIsGenerating(false);
+    }
   }
 
   return (
@@ -81,6 +136,15 @@ export function EditTaskForm({ task, onSubmit, onCancel }: EditTaskFormProps) {
             <div className="space-y-2">
                 {fields.map((field, index) => (
                     <div key={field.id} className="flex items-center gap-2">
+                         <FormField
+                            control={form.control}
+                            name={`subtasks.${index}.completed`}
+                            render={({ field: checkboxField }) => (
+                              <FormControl>
+                                  <Input type="checkbox" checked={checkboxField.value} onChange={checkboxField.onChange} className="hidden" />
+                              </FormControl>
+                            )}
+                        />
                         <FormField
                             control={form.control}
                             name={`subtasks.${index}.title`}
@@ -107,6 +171,24 @@ export function EditTaskForm({ task, onSubmit, onCancel }: EditTaskFormProps) {
             </Button>
         </FormItem>
         
+        <Separator />
+
+        <div className="space-y-2">
+          <FormLabel>Generate Subtasks with AI</FormLabel>
+          <Textarea 
+            placeholder="Provide a detailed description of what needs to be done, and the AI will break it down into subtasks..."
+            value={generationPrompt}
+            onChange={(e) => setGenerationPrompt(e.target.value)}
+            rows={3}
+          />
+          <Button type="button" onClick={handleGenerateSubtasks} disabled={isGenerating} className="w-full">
+            {isGenerating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
+            Generate Subtasks
+          </Button>
+        </div>
+        
+        <Separator />
+
         <FormField
           control={form.control}
           name="notes"
@@ -134,11 +216,11 @@ export function EditTaskForm({ task, onSubmit, onCancel }: EditTaskFormProps) {
           )}
         />
         <div className="flex justify-end gap-2 pt-2">
-            <Button type="button" variant="ghost" onClick={onCancel} disabled={isSubmitting}>
+            <Button type="button" variant="ghost" onClick={onCancel} disabled={isSubmitting || isGenerating}>
                 Cancel
             </Button>
-            <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            <Button type="submit" disabled={isSubmitting || isGenerating}>
+                {(isSubmitting || isGenerating) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 Save Changes
             </Button>
         </div>
