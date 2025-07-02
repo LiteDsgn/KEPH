@@ -1,6 +1,6 @@
 'use client';
 
-import { useForm } from 'react-hook-form';
+import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Button } from '@/components/ui/button';
@@ -15,11 +15,15 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import type { Task } from '@/types';
-import { Loader2 } from 'lucide-react';
+import { Loader2, X } from 'lucide-react';
 
 const formSchema = z.object({
   title: z.string().min(1, 'Task title cannot be empty.'),
-  description: z.string().optional(),
+  subtasks: z.array(z.object({
+    id: z.string(),
+    title: z.string().min(1, 'Subtask cannot be empty.'),
+    completed: z.boolean(),
+  })).optional(),
   notes: z.string().optional(),
   url: z.string().url('Please enter a valid URL.').or(z.literal('')).optional(),
 });
@@ -37,10 +41,15 @@ export function EditTaskForm({ task, onSubmit, onCancel }: EditTaskFormProps) {
     resolver: zodResolver(formSchema),
     defaultValues: {
       title: task.title,
-      description: task.description || '',
+      subtasks: task.subtasks || [],
       notes: task.notes || '',
       url: task.url || '',
     },
+  });
+
+  const { fields, append, remove } = useFieldArray({
+    control: form.control,
+    name: 'subtasks',
   });
 
   const { isSubmitting } = form.formState;
@@ -66,19 +75,38 @@ export function EditTaskForm({ task, onSubmit, onCancel }: EditTaskFormProps) {
             </FormItem>
           )}
         />
-        <FormField
-          control={form.control}
-          name="description"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Description</FormLabel>
-              <FormControl>
-                <Textarea {...field} placeholder="Add a detailed description..." />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        
+        <FormItem>
+            <FormLabel>Subtasks</FormLabel>
+            <div className="space-y-2">
+                {fields.map((field, index) => (
+                    <div key={field.id} className="flex items-center gap-2">
+                        <FormField
+                            control={form.control}
+                            name={`subtasks.${index}.title`}
+                            render={({ field: inputField }) => (
+                                <FormControl>
+                                  <Input {...inputField} placeholder={`Subtask ${index + 1}`} />
+                                </FormControl>
+                            )}
+                        />
+                        <Button type="button" variant="ghost" size="icon" onClick={() => remove(index)}>
+                            <X className="h-4 w-4" />
+                        </Button>
+                    </div>
+                ))}
+            </div>
+            <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="mt-2"
+                onClick={() => append({ id: crypto.randomUUID(), title: '', completed: false })}
+            >
+                Add Subtask
+            </Button>
+        </FormItem>
+        
         <FormField
           control={form.control}
           name="notes"

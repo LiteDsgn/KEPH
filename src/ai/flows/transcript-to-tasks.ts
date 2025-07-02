@@ -22,11 +22,11 @@ const TranscriptToTasksOutputSchema = z.object({
     .array(
       z.object({
         title: z.string().describe('A short, actionable task title.'),
-        description: z
-          .string()
+        subtasks: z
+          .array(z.string())
           .optional()
           .describe(
-            'A more detailed description of the task, explaining the context and what needs to be done.'
+            'A list of smaller, concrete steps or sub-tasks needed to complete the main task.'
           ),
       })
     )
@@ -45,7 +45,7 @@ const prompt = ai.definePrompt({
   prompt: `You are an AI assistant that extracts actionable tasks from a meeting transcript.
 
   Given the following meeting transcript, identify the tasks that need to be done.
-  For each task, provide a concise 'title' and a detailed 'description'. The title should be a clear summary of the action item.
+  For each task, provide a concise 'title' and a list of 'subtasks' that break down the main task. The title should be a clear summary of the action item.
 
   {{#if instructions}}
   You MUST follow these instructions precisely when creating the tasks:

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Button } from '@/components/ui/button';
@@ -16,12 +16,14 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, PlusCircle } from 'lucide-react';
+import { Loader2, PlusCircle, X } from 'lucide-react';
 import type { Task } from '@/types';
 
 const formSchema = z.object({
   title: z.string().min(1, 'Task title cannot be empty.'),
-  description: z.string().optional(),
+  subtasks: z.array(z.object({
+    title: z.string().min(1, 'Subtask cannot be empty.'),
+  })).optional(),
   notes: z.string().optional(),
   url: z.string().url('Please enter a valid URL.').or(z.literal('')).optional(),
 });
@@ -40,16 +42,30 @@ export function ManualTaskForm({ onTaskCreated }: ManualTaskFormProps) {
     resolver: zodResolver(formSchema),
     defaultValues: {
       title: '',
-      description: '',
+      subtasks: [],
       notes: '',
       url: '',
     },
   });
 
+  const { fields, append, remove } = useFieldArray({
+    control: form.control,
+    name: 'subtasks',
+  });
+
   async function onSubmit(values: FormValues) {
     setIsSubmitting(true);
     try {
-      onTaskCreated(values);
+      onTaskCreated({
+        title: values.title,
+        notes: values.notes,
+        url: values.url,
+        subtasks: values.subtasks?.map(st => ({
+            id: crypto.randomUUID(),
+            title: st.title,
+            completed: false,
+        })),
+      });
       form.reset();
       toast({
           title: 'Task Added',
@@ -72,31 +88,50 @@ export function ManualTaskForm({ onTaskCreated }: ManualTaskFormProps) {
         <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <FormField
-            control={form.control}
-            name="title"
-            render={({ field }) => (
-                <FormItem>
-                <FormLabel>Task Title</FormLabel>
-                <FormControl>
-                    <Input placeholder="e.g., Buy milk" {...field} />
-                </FormControl>
-                <FormMessage />
-                </FormItem>
-            )}
+              control={form.control}
+              name="title"
+              render={({ field }) => (
+                  <FormItem>
+                  <FormLabel>Task Title</FormLabel>
+                  <FormControl>
+                      <Input placeholder="e.g., Buy milk" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                  </FormItem>
+              )}
             />
-            <FormField
-                control={form.control}
-                name="description"
-                render={({ field }) => (
-                    <FormItem>
-                    <FormLabel>Description (Optional)</FormLabel>
-                    <FormControl>
-                        <Textarea {...field} placeholder="Add a detailed description..." />
-                    </FormControl>
-                    <FormMessage />
-                    </FormItem>
-                )}
-            />
+            
+            <FormItem>
+                <FormLabel>Subtasks (Optional)</FormLabel>
+                <div className="space-y-2">
+                    {fields.map((field, index) => (
+                        <div key={field.id} className="flex items-center gap-2">
+                            <FormField
+                                control={form.control}
+                                name={`subtasks.${index}.title`}
+                                render={({ field }) => (
+                                  <FormControl>
+                                      <Input {...field} placeholder={`Subtask ${index + 1}`} />
+                                  </FormControl>
+                                )}
+                            />
+                            <Button type="button" variant="ghost" size="icon" onClick={() => remove(index)}>
+                                <X className="h-4 w-4" />
+                            </Button>
+                        </div>
+                    ))}
+                </div>
+                <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="mt-2"
+                    onClick={() => append({ title: '' })}
+                >
+                    Add Subtask
+                </Button>
+            </FormItem>
+
              <FormField
                 control={form.control}
                 name="notes"

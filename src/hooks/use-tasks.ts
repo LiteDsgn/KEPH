@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useCallback, useMemo, useEffect } from 'react';
-import type { Task, TaskStatus } from '@/types';
+import type { Task, TaskStatus, Subtask } from '@/types';
 import { isBefore, startOfToday } from 'date-fns';
 
 const generateInitialTasks = (): Task[] => {
@@ -9,7 +9,10 @@ const generateInitialTasks = (): Task[] => {
   const initialTasksData: Omit<Task, 'id'>[] = [
     {
       title: 'Review the quarterly report from 2 days ago',
-      description: 'Focus on the Q4 growth metrics. The charts on page 5 need verification.',
+      subtasks: [
+        { id: crypto.randomUUID(), title: 'Focus on the Q4 growth metrics.', completed: true },
+        { id: crypto.randomUUID(), title: 'Verify the charts on page 5.', completed: false },
+      ],
       status: 'current',
       createdAt: new Date(new Date().setDate(new Date().getDate() - 2)),
       notes: 'John mentioned to double check the figures with the finance team.',
@@ -17,20 +20,29 @@ const generateInitialTasks = (): Task[] => {
     },
     {
       title: 'Send follow-up email to the design team',
-      description: 'Ask about the new mockups for the landing page.',
+      subtasks: [
+        { id: crypto.randomUUID(), title: 'Ask about the new mockups for the landing page.', completed: false },
+      ],
       status: 'current',
       createdAt: new Date(),
       notes: 'Waiting for their response to proceed.',
     },
     {
       title: 'Prepare presentation for the weekly sync',
-      description: 'Slides should cover progress, blockers, and next steps.',
+      subtasks: [
+        { id: crypto.randomUUID(), title: 'Cover progress', completed: true },
+        { id: crypto.randomUUID(), title: 'Cover blockers', completed: true },
+        { id: crypto.randomUUID(), title: 'Cover next steps', completed: false },
+      ],
       status: 'completed',
       createdAt: new Date(Date.now() - 24 * 60 * 60 * 1000),
     },
       {
       title: 'Onboard new marketing intern',
-      description: 'Go through the onboarding checklist and introduce them to the team.',
+      subtasks: [
+        { id: crypto.randomUUID(), title: 'Go through the onboarding checklist.', completed: false },
+        { id: crypto.randomUUID(), title: 'Introduce them to the team.', completed: false },
+      ],
       status: 'pending',
       createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
       url: 'https://example.com/onboarding-docs'
@@ -56,11 +68,17 @@ export function useTasks() {
     setTasks(generateInitialTasks());
   }, []);
 
-  const addTasks = useCallback((newTasksData: Array<{ title: string; description?: string }>) => {
+  const addTasks = useCallback((newTasksData: Array<{ title: string; subtasks?: string[] }>) => {
     const newTasks: Task[] = newTasksData.map((data) => ({
       id: crypto.randomUUID(),
       title: data.title,
-      description: data.description || '',
+      subtasks: data.subtasks
+        ? data.subtasks.map(subtaskTitle => ({
+            id: crypto.randomUUID(),
+            title: subtaskTitle,
+            completed: false,
+        }))
+        : [],
       status: 'current',
       createdAt: new Date(),
       notes: '',
@@ -95,8 +113,8 @@ export function useTasks() {
     }
     return tasks.filter((task) =>
       (task.title.toLowerCase().includes(search.toLowerCase())) ||
-      (task.description?.toLowerCase().includes(search.toLowerCase())) ||
-      (task.notes?.toLowerCase().includes(search.toLowerCase()))
+      (task.notes?.toLowerCase().includes(search.toLowerCase())) ||
+      (task.subtasks?.some(subtask => subtask.title.toLowerCase().includes(search.toLowerCase())))
     );
   }, [tasks, search]);
 

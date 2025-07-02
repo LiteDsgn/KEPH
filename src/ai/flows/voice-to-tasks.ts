@@ -25,11 +25,11 @@ const VoiceToTasksOutputSchema = z.object({
     .array(
       z.object({
         title: z.string().describe('A short, actionable task title.'),
-        description: z
-          .string()
+        subtasks: z
+          .array(z.string())
           .optional()
           .describe(
-            'A more detailed description of the task, explaining the context and what needs to be done.'
+            'A list of smaller, concrete steps or sub-tasks needed to complete the main task.'
           ),
       })
     )
@@ -49,8 +49,8 @@ const prompt = ai.definePrompt({
 
   Here is the user's speech recording: {{media url=speechDataUri}}
 
-  Extract the tasks from the speech. For each task, create a short 'title' and a 'description' with more details.
-  The title should be concise and actionable. The description should elaborate on the task.
+  Extract the tasks from the speech. For each task, create a short 'title' and a list of 'subtasks'.
+  The title should be concise and actionable. The subtasks should break down the main task into smaller steps.
   Do not include any introductory or concluding remarks.
 
   Example Output:
@@ -58,15 +58,11 @@ const prompt = ai.definePrompt({
     "tasks": [
       {
         "title": "Book dentist appointment",
-        "description": "Call Dr. Smith's office to schedule a check-up for next week."
+        "subtasks": ["Call Dr. Smith's office", "Schedule a check-up for next week"]
       },
       {
         "title": "Buy groceries",
-        "description": "Need to buy milk, eggs, bread, and chicken for dinner."
-      },
-      {
-        "title": "Finish the presentation",
-        "description": "Complete the slides for the Q3 review meeting, focusing on the marketing a-nalytics section."
+        "subtasks": ["Get milk and eggs", "Buy bread", "Pick up chicken for dinner"]
       }
     ]
   }

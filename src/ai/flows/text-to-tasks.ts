@@ -21,11 +21,11 @@ const TextToTasksOutputSchema = z.object({
     .array(
       z.object({
         title: z.string().describe('A short, actionable task title.'),
-        description: z
-          .string()
+        subtasks: z
+          .array(z.string())
           .optional()
           .describe(
-            'A more detailed description of the task, explaining the context and what needs to be done.'
+            'A list of smaller, concrete steps or sub-tasks needed to complete the main task.'
           ),
       })
     )
@@ -44,8 +44,8 @@ const prompt = ai.definePrompt({
   prompt: `You are a personal assistant that is good at creating todo lists from plans.
 
   Create a todo list of actionable tasks from the following description.
-  For each task, provide a concise 'title' and a more detailed 'description'.
-  The title should be a clear action item. The description should provide any necessary context or details.
+  For each task, provide a concise 'title' and a list of 'subtasks' that break down the main task into smaller steps.
+  The title should be a clear action item.
 
   Description:
   {{description}}

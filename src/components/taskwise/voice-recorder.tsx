@@ -8,7 +8,7 @@ import { Mic, StopCircle, Loader2, AlertTriangle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface VoiceRecorderProps {
-  onTasksCreated: (tasks: Array<{ title: string; description?: string }>) => void;
+  onTasksCreated: (tasks: Array<{ title: string; subtasks?: string[] }>) => void;
 }
 
 export function VoiceRecorder({ onTasksCreated }: VoiceRecorderProps) {

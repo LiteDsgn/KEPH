@@ -13,10 +13,11 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator
 } from '@/components/ui/dropdown-menu';
-import { MoreHorizontal, Trash2, Archive, Circle, CheckCircle2, Edit, Link as LinkIcon, NotebookText, MessageSquareText } from 'lucide-react';
+import { MoreHorizontal, Trash2, Archive, Circle, CheckCircle2, Edit, Link as LinkIcon, NotebookText } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { formatDistanceToNow } from 'date-fns';
 import { EditTaskForm } from './edit-task-form';
+import { Progress } from '../ui/progress';
 
 interface TaskItemProps {
   task: Task;
@@ -35,10 +36,21 @@ export function TaskItem({ task, onUpdate, onDelete }: TaskItemProps) {
     onUpdate(task.id, { status });
   }
 
-  const handleEditSubmit = async (values: { title: string; description?: string; notes?: string; url?: string }) => {
+  const handleEditSubmit = async (values: Partial<Omit<Task, 'id' | 'createdAt'>>) => {
     onUpdate(task.id, values);
     setIsEditDialogOpen(false);
   };
+
+  const handleSubtaskCheck = (subtaskId: string, checked: boolean) => {
+    const updatedSubtasks = task.subtasks?.map(subtask => 
+      subtask.id === subtaskId ? { ...subtask, completed: checked } : subtask
+    );
+    onUpdate(task.id, { subtasks: updatedSubtasks });
+  };
+
+  const completedSubtasks = task.subtasks?.filter(s => s.completed).length || 0;
+  const totalSubtasks = task.subtasks?.length || 0;
+  const progress = totalSubtasks > 0 ? (completedSubtasks / totalSubtasks) * 100 : 0;
 
   return (
     <>
@@ -67,12 +79,37 @@ export function TaskItem({ task, onUpdate, onDelete }: TaskItemProps) {
             >
               {task.title}
             </div>
-            {task.description && (
-                <p className="text-sm text-muted-foreground flex items-start gap-2">
-                    <MessageSquareText className="w-4 h-4 mt-0.5 shrink-0" />
-                    <span className="whitespace-pre-wrap">{task.description}</span>
-                </p>
+
+            {task.subtasks && task.subtasks.length > 0 && (
+                <div className="space-y-2 pt-2">
+                    <div className="flex items-center gap-2">
+                        <Progress value={progress} className="h-2" />
+                        <span className="text-xs text-muted-foreground whitespace-nowrap">{completedSubtasks} / {totalSubtasks}</span>
+                    </div>
+                    <div className="space-y-2">
+                        {task.subtasks.map(subtask => (
+                            <div key={subtask.id} className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+                                <Checkbox
+                                    id={`subtask-${subtask.id}`}
+                                    checked={subtask.completed}
+                                    onCheckedChange={(checked) => handleSubtaskCheck(subtask.id, !!checked)}
+                                />
+                                <label
+                                    htmlFor={`subtask-${subtask.id}`}
+                                    className={cn(
+                                        "text-sm",
+                                        subtask.completed && "line-through text-muted-foreground",
+                                        task.status === 'completed' && "line-through text-muted-foreground"
+                                    )}
+                                >
+                                    {subtask.title}
+                                </label>
+                            </div>
+                        ))}
+                    </div>
+                </div>
             )}
+
             {task.notes && (
                 <p className="text-sm text-muted-foreground flex items-start gap-2">
                     <NotebookText className="w-4 h-4 mt-0.5 shrink-0" />
