@@ -6,12 +6,16 @@ import { TranscriptToTasksForm } from './transcript-to-tasks-form';
 import { VoiceRecorder } from './voice-recorder';
 import { FileText, ClipboardList, Mic } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
+import { Separator } from '../ui/separator';
+import { ManualTaskForm } from './manual-task-form';
+import type { Task } from '@/types';
 
 interface TaskInputAreaProps {
   onTasksCreated: (tasks: string[]) => void;
+  onTaskCreated: (taskData: Omit<Task, 'id' | 'status' | 'createdAt'>) => void;
 }
 
-export function TaskInputArea({ onTasksCreated }: TaskInputAreaProps) {
+export function TaskInputArea({ onTasksCreated, onTaskCreated }: TaskInputAreaProps) {
   return (
     <Card>
       <CardHeader>
@@ -43,6 +47,10 @@ export function TaskInputArea({ onTasksCreated }: TaskInputAreaProps) {
             <VoiceRecorder onTasksCreated={onTasksCreated} />
           </TabsContent>
         </Tabs>
+
+        <Separator className="my-6" />
+
+        <ManualTaskForm onTaskCreated={onTaskCreated} />
       </CardContent>
     </Card>
   );

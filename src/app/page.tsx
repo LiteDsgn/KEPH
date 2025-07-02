@@ -6,7 +6,7 @@ import { useTasks } from '@/hooks/use-tasks';
 import { BrainCircuit } from 'lucide-react';
 
 export default function Home() {
-  const { tasks, addTasks, updateTaskStatus, deleteTask, search, setSearch } = useTasks();
+  const { tasks, addTasks, addTask, updateTask, deleteTask, search, setSearch } = useTasks();
 
   return (
     <div className="min-h-screen bg-background font-body">
@@ -20,12 +20,12 @@ export default function Home() {
         </header>
         <main className="grid grid-cols-1 lg:grid-cols-5 gap-8">
           <div className="lg:col-span-2">
-            <TaskInputArea onTasksCreated={addTasks} />
+            <TaskInputArea onTasksCreated={addTasks} onTaskCreated={addTask}/>
           </div>
           <div className="lg:col-span-3">
             <TaskList
               tasks={tasks}
-              onUpdateTask={updateTaskStatus}
+              onUpdateTask={updateTask}
               onDeleteTask={deleteTask}
               search={search}
               setSearch={setSearch}

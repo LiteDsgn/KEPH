@@ -10,7 +10,7 @@ import { Search, Circle, CheckCircle2, Archive } from 'lucide-react';
 
 interface TaskListProps {
   tasks: Task[];
-  onUpdateTask: (id: string, status: TaskStatus) => void;
+  onUpdateTask: (id: string, updates: Partial<Omit<Task, 'id' | 'createdAt'>>) => void;
   onDeleteTask: (id: string) => void;
   search: string;
   setSearch: (search: string) => void;
@@ -37,7 +37,7 @@ export function TaskList({ tasks, onUpdateTask, onDeleteTask, search, setSearch 
           <TaskItem
             key={task.id}
             task={task}
-            onUpdateStatus={onUpdateTask}
+            onUpdate={onUpdateTask}
             onDelete={onDeleteTask}
           />
         ))}

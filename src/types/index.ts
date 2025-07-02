@@ -5,4 +5,6 @@ export interface Task {
   content: string;
   status: TaskStatus;
   createdAt: Date;
+  notes?: string;
+  url?: string;
 }

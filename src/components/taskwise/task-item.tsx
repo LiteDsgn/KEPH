@@ -1,95 +1,150 @@
 'use client';
 
+import { useState } from 'react';
 import type { Task, TaskStatus } from '@/types';
 import { Card, CardContent } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSeparator
 } from '@/components/ui/dropdown-menu';
-import { MoreHorizontal, Trash2, Archive, Circle, CheckCircle2 } from 'lucide-react';
+import { MoreHorizontal, Trash2, Archive, Circle, CheckCircle2, Edit, Link as LinkIcon, NotebookText } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { formatDistanceToNow } from 'date-fns';
+import { EditTaskForm } from './edit-task-form';
 
 interface TaskItemProps {
   task: Task;
-  onUpdateStatus: (id: string, status: TaskStatus) => void;
+  onUpdate: (id: string, updates: Partial<Omit<Task, 'id' | 'createdAt'>>) => void;
   onDelete: (id: string) => void;
 }
 
-export function TaskItem({ task, onUpdateStatus, onDelete }: TaskItemProps) {
+export function TaskItem({ task, onUpdate, onDelete }: TaskItemProps) {
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+
   const handleCheck = (checked: boolean) => {
-    onUpdateStatus(task.id, checked ? 'completed' : 'current');
+    onUpdate(task.id, { status: checked ? 'completed' : 'current' });
+  };
+  
+  const handleUpdateStatus = (status: TaskStatus) => {
+    onUpdate(task.id, { status });
+  }
+
+  const handleEditSubmit = async (values: { content: string; notes?: string; url?: string }) => {
+    onUpdate(task.id, values);
+    setIsEditDialogOpen(false);
   };
 
   return (
-    <Card
-      className={cn(
-        'transition-all duration-300 ease-in-out',
-        task.status === 'completed' && 'bg-muted/50'
-      )}
-    >
-      <CardContent className="p-4 flex items-center gap-4">
-        <Checkbox
-          id={`task-${task.id}`}
-          checked={task.status === 'completed'}
-          onCheckedChange={handleCheck}
-          aria-label={`Mark task as ${task.status === 'completed' ? 'current' : 'completed'}`}
-        />
-        <div className="flex-grow">
-          <label
-            htmlFor={`task-${task.id}`}
-            className={cn(
-              'font-medium transition-colors',
-              task.status === 'completed' && 'line-through text-muted-foreground'
-            )}
-          >
-            {task.content}
-          </label>
-          <p className="text-xs text-muted-foreground">
-             {formatDistanceToNow(task.createdAt, { addSuffix: true })}
-          </p>
-        </div>
-
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0">
-              <MoreHorizontal className="h-4 w-4" />
-              <span className="sr-only">More options</span>
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            {task.status !== 'current' && (
-              <DropdownMenuItem onClick={() => onUpdateStatus(task.id, 'current')}>
-                <Circle className="mr-2 h-4 w-4" />
-                <span>Mark as Current</span>
-              </DropdownMenuItem>
-            )}
-            {task.status !== 'completed' && (
-               <DropdownMenuItem onClick={() => onUpdateStatus(task.id, 'completed')}>
-                <CheckCircle2 className="mr-2 h-4 w-4" />
-                <span>Mark as Completed</span>
-              </DropdownMenuItem>
-            )}
-            {task.status !== 'pending' && (
-              <DropdownMenuItem onClick={() => onUpdateStatus(task.id, 'pending')}>
-                <Archive className="mr-2 h-4 w-4" />
-                <span>Move to Pending</span>
-              </DropdownMenuItem>
-            )}
-            <DropdownMenuItem
-              className="text-destructive focus:text-destructive"
-              onClick={() => onDelete(task.id)}
+    <>
+      <Card
+        className={cn(
+          'transition-all duration-300 ease-in-out',
+          task.status === 'completed' && 'bg-muted/50'
+        )}
+      >
+        <CardContent className="p-4 flex items-start gap-4">
+          <Checkbox
+            id={`task-${task.id}`}
+            checked={task.status === 'completed'}
+            onCheckedChange={handleCheck}
+            aria-label={`Mark task as ${task.status === 'completed' ? 'current' : 'completed'}`}
+            className="mt-1"
+          />
+          <div className="flex-grow space-y-2">
+            <label
+              htmlFor={`task-${task.id}`}
+              className={cn(
+                'font-medium transition-colors cursor-pointer',
+                task.status === 'completed' && 'line-through text-muted-foreground'
+              )}
             >
-              <Trash2 className="mr-2 h-4 w-4" />
-              <span>Delete</span>
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </CardContent>
-    </Card>
+              {task.content}
+            </label>
+            {task.notes && (
+                <p className="text-sm text-muted-foreground flex items-start gap-2">
+                    <NotebookText className="w-4 h-4 mt-0.5 shrink-0" />
+                    <span className="whitespace-pre-wrap">{task.notes}</span>
+                </p>
+            )}
+            {task.url && (
+                <a 
+                    href={task.url} 
+                    target="_blank" 
+                    rel="noopener noreferrer" 
+                    className="text-sm text-blue-500 hover:underline flex items-center gap-2"
+                    onClick={(e) => e.stopPropagation()}
+                >
+                    <LinkIcon className="w-4 h-4 shrink-0" />
+                    <span className="truncate">{task.url}</span>
+                </a>
+            )}
+            <p className="text-xs text-muted-foreground">
+              {formatDistanceToNow(task.createdAt, { addSuffix: true })}
+            </p>
+          </div>
+
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0">
+                <MoreHorizontal className="h-4 w-4" />
+                <span className="sr-only">More options</span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+               <DropdownMenuItem onClick={() => setIsEditDialogOpen(true)}>
+                 <Edit className="mr-2 h-4 w-4" />
+                 <span>Edit</span>
+               </DropdownMenuItem>
+               <DropdownMenuSeparator />
+              {task.status !== 'current' && (
+                <DropdownMenuItem onClick={() => handleUpdateStatus('current')}>
+                  <Circle className="mr-2 h-4 w-4" />
+                  <span>Mark as Current</span>
+                </DropdownMenuItem>
+              )}
+              {task.status !== 'completed' && (
+                 <DropdownMenuItem onClick={() => handleUpdateStatus('completed')}>
+                  <CheckCircle2 className="mr-2 h-4 w-4" />
+                  <span>Mark as Completed</span>
+                </DropdownMenuItem>
+              )}
+              {task.status !== 'pending' && (
+                <DropdownMenuItem onClick={() => handleUpdateStatus('pending')}>
+                  <Archive className="mr-2 h-4 w-4" />
+                  <span>Move to Pending</span>
+                </DropdownMenuItem>
+              )}
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                className="text-destructive focus:text-destructive"
+                onClick={() => onDelete(task.id)}
+              >
+                <Trash2 className="mr-2 h-4 w-4" />
+                <span>Delete</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </CardContent>
+      </Card>
+
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent>
+            <DialogHeader>
+                <DialogTitle>Edit Task</DialogTitle>
+            </DialogHeader>
+            <EditTaskForm 
+                task={task} 
+                onSubmit={handleEditSubmit}
+                onCancel={() => setIsEditDialogOpen(false)}
+            />
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
