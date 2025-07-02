@@ -1,1 +1,6 @@
-// Flows will be imported for their side effects in this file.
+import { config } from 'dotenv';
+config();
+
+import '@/ai/flows/voice-to-tasks.ts';
+import '@/ai/flows/text-to-tasks.ts';
+import '@/ai/flows/transcript-to-tasks.ts';
