@@ -70,7 +70,7 @@ export function TaskItem({ task, onUpdate, onDelete }: TaskItemProps) {
                 aria-label={`Mark task as ${task.status === 'completed' ? 'current' : 'completed'}`}
             />
           </div>
-          <div className="flex-grow space-y-2">
+          <div className="flex-grow space-y-2 min-w-0">
             <div
               className={cn(
                 'font-medium',
@@ -112,24 +112,29 @@ export function TaskItem({ task, onUpdate, onDelete }: TaskItemProps) {
             )}
 
             {task.notes && (
-                <p className="text-sm text-muted-foreground flex items-start gap-2">
+                <p className="text-sm text-muted-foreground flex items-start gap-2 pt-1">
                     <NotebookText className="w-4 h-4 mt-0.5 shrink-0" />
                     <span className="whitespace-pre-wrap">{task.notes}</span>
                 </p>
             )}
-            {task.url && (
-                <a 
-                    href={task.url} 
-                    target="_blank" 
-                    rel="noopener noreferrer" 
-                    className="text-sm text-blue-500 hover:underline flex items-center gap-2"
-                    onClick={(e) => e.stopPropagation()}
-                >
-                    <LinkIcon className="w-4 h-4 shrink-0" />
-                    <span className="truncate">{task.url}</span>
-                </a>
+            {task.urls && task.urls.length > 0 && (
+              <div className="space-y-1 pt-1">
+                {task.urls.map(url => (
+                   <a 
+                      key={url.id}
+                      href={url.value} 
+                      target="_blank" 
+                      rel="noopener noreferrer" 
+                      className="text-sm text-blue-500 hover:underline flex items-center gap-2"
+                      onClick={(e) => e.stopPropagation()}
+                  >
+                      <LinkIcon className="w-4 h-4 shrink-0" />
+                      <span className="truncate">{url.value}</span>
+                  </a>
+                ))}
+              </div>
             )}
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs text-muted-foreground pt-1">
               {formatDistanceToNow(task.createdAt, { addSuffix: true })}
             </p>
           </div>
@@ -179,7 +184,7 @@ export function TaskItem({ task, onUpdate, onDelete }: TaskItemProps) {
       </Card>
 
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent>
+        <DialogContent className="sm:max-w-3xl">
             <DialogHeader>
                 <DialogTitle>Edit Task</DialogTitle>
             </DialogHeader>

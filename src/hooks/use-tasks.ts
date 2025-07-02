@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useCallback, useMemo, useEffect } from 'react';
-import type { Task, TaskStatus, Subtask } from '@/types';
+import type { Task, TaskStatus } from '@/types';
 import { isBefore, startOfToday } from 'date-fns';
 
 const generateInitialTasks = (): Task[] => {
@@ -16,7 +16,7 @@ const generateInitialTasks = (): Task[] => {
       status: 'current',
       createdAt: new Date(new Date().setDate(new Date().getDate() - 2)),
       notes: 'John mentioned to double check the figures with the finance team.',
-      url: 'https://example.com/reports/q4',
+      urls: [{ id: crypto.randomUUID(), value: 'https://example.com/reports/q4' }],
     },
     {
       title: 'Send follow-up email to the design team',
@@ -26,6 +26,7 @@ const generateInitialTasks = (): Task[] => {
       status: 'current',
       createdAt: new Date(),
       notes: 'Waiting for their response to proceed.',
+      urls: [],
     },
     {
       title: 'Prepare presentation for the weekly sync',
@@ -36,6 +37,7 @@ const generateInitialTasks = (): Task[] => {
       ],
       status: 'completed',
       createdAt: new Date(Date.now() - 24 * 60 * 60 * 1000),
+      urls: [],
     },
       {
       title: 'Onboard new marketing intern',
@@ -45,7 +47,7 @@ const generateInitialTasks = (): Task[] => {
       ],
       status: 'pending',
       createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
-      url: 'https://example.com/onboarding-docs'
+      urls: [{ id: crypto.randomUUID(), value: 'https://example.com/onboarding-docs' }]
     },
   ];
 
@@ -82,7 +84,7 @@ export function useTasks() {
       status: 'current',
       createdAt: new Date(),
       notes: '',
-      url: ''
+      urls: []
     }));
     setTasks((prev) => [...newTasks, ...prev]);
   }, []);
@@ -111,10 +113,12 @@ export function useTasks() {
     if (!search) {
       return tasks;
     }
+    const lowercasedSearch = search.toLowerCase();
     return tasks.filter((task) =>
-      (task.title.toLowerCase().includes(search.toLowerCase())) ||
-      (task.notes?.toLowerCase().includes(search.toLowerCase())) ||
-      (task.subtasks?.some(subtask => subtask.title.toLowerCase().includes(search.toLowerCase())))
+      (task.title.toLowerCase().includes(lowercasedSearch)) ||
+      (task.notes?.toLowerCase().includes(lowercasedSearch)) ||
+      (task.subtasks?.some(subtask => subtask.title.toLowerCase().includes(lowercasedSearch))) ||
+      (task.urls?.some(url => url.value.toLowerCase().includes(lowercasedSearch)))
     );
   }, [tasks, search]);
 

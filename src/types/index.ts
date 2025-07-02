@@ -6,6 +6,11 @@ export interface Subtask {
   completed: boolean;
 }
 
+export interface Url {
+  id: string;
+  value: string;
+}
+
 export interface Task {
   id: string;
   title: string;
@@ -13,5 +18,5 @@ export interface Task {
   status: TaskStatus;
   createdAt: Date;
   notes?: string;
-  url?: string;
+  urls?: Url[];
 }

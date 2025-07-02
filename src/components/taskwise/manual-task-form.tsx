@@ -25,7 +25,9 @@ const formSchema = z.object({
     title: z.string().min(1, 'Subtask cannot be empty.'),
   })).optional(),
   notes: z.string().optional(),
-  url: z.string().url('Please enter a valid URL.').or(z.literal('')).optional(),
+  urls: z.array(z.object({
+    value: z.string().url({ message: "Please enter a valid URL." }).min(1, 'URL cannot be empty.'),
+  })).optional(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -44,13 +46,18 @@ export function ManualTaskForm({ onTaskCreated }: ManualTaskFormProps) {
       title: '',
       subtasks: [],
       notes: '',
-      url: '',
+      urls: [],
     },
   });
 
-  const { fields, append, remove } = useFieldArray({
+  const { fields: subtaskFields, append: appendSubtask, remove: removeSubtask } = useFieldArray({
     control: form.control,
     name: 'subtasks',
+  });
+
+  const { fields: urlFields, append: appendUrl, remove: removeUrl } = useFieldArray({
+    control: form.control,
+    name: 'urls',
   });
 
   async function onSubmit(values: FormValues) {
@@ -59,7 +66,10 @@ export function ManualTaskForm({ onTaskCreated }: ManualTaskFormProps) {
       onTaskCreated({
         title: values.title,
         notes: values.notes,
-        url: values.url,
+        urls: values.urls?.map(u => ({
+            id: crypto.randomUUID(),
+            value: u.value,
+        })),
         subtasks: values.subtasks?.map(st => ({
             id: crypto.randomUUID(),
             title: st.title,
@@ -104,7 +114,7 @@ export function ManualTaskForm({ onTaskCreated }: ManualTaskFormProps) {
             <FormItem>
                 <FormLabel>Subtasks (Optional)</FormLabel>
                 <div className="space-y-2">
-                    {fields.map((field, index) => (
+                    {subtaskFields.map((field, index) => (
                         <div key={field.id} className="flex items-center gap-2">
                             <FormField
                                 control={form.control}
@@ -115,7 +125,7 @@ export function ManualTaskForm({ onTaskCreated }: ManualTaskFormProps) {
                                   </FormControl>
                                 )}
                             />
-                            <Button type="button" variant="ghost" size="icon" onClick={() => remove(index)}>
+                            <Button type="button" variant="ghost" size="icon" onClick={() => removeSubtask(index)}>
                                 <X className="h-4 w-4" />
                             </Button>
                         </div>
@@ -126,7 +136,7 @@ export function ManualTaskForm({ onTaskCreated }: ManualTaskFormProps) {
                     variant="outline"
                     size="sm"
                     className="mt-2"
-                    onClick={() => append({ title: '' })}
+                    onClick={() => appendSubtask({ title: '' })}
                 >
                     Add Subtask
                 </Button>
@@ -145,19 +155,38 @@ export function ManualTaskForm({ onTaskCreated }: ManualTaskFormProps) {
                     </FormItem>
                 )}
             />
-            <FormField
-                control={form.control}
-                name="url"
-                render={({ field }) => (
-                    <FormItem>
-                    <FormLabel>URL (Optional)</FormLabel>
-                    <FormControl>
-                        <Input {...field} placeholder="https://related-link.com" />
-                    </FormControl>
-                    <FormMessage />
-                    </FormItem>
-                )}
-            />
+            
+            <FormItem>
+                <FormLabel>URLs (Optional)</FormLabel>
+                <div className="space-y-2">
+                    {urlFields.map((field, index) => (
+                        <div key={field.id} className="flex items-center gap-2">
+                            <FormField
+                                control={form.control}
+                                name={`urls.${index}.value`}
+                                render={({ field }) => (
+                                  <FormControl>
+                                      <Input {...field} placeholder="https://related-link.com" />
+                                  </FormControl>
+                                )}
+                            />
+                            <Button type="button" variant="ghost" size="icon" onClick={() => removeUrl(index)}>
+                                <X className="h-4 w-4" />
+                            </Button>
+                        </div>
+                    ))}
+                </div>
+                <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="mt-2"
+                    onClick={() => appendUrl({ value: '' })}
+                >
+                    Add URL
+                </Button>
+            </FormItem>
+
             <Button type="submit" disabled={isSubmitting} className="w-full">
             {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <PlusCircle className="mr-2 h-4 w-4" />}
             Add Task

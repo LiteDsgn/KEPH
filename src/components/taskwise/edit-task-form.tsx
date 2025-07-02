@@ -20,6 +20,7 @@ import { Loader2, X, Sparkles } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { generateSubtasks } from '@/ai/flows/generate-subtasks';
 import { useToast } from '@/hooks/use-toast';
+import { cn } from '@/lib/utils';
 
 const formSchema = z.object({
   title: z.string().min(1, 'Task title cannot be empty.'),
@@ -29,7 +30,10 @@ const formSchema = z.object({
     completed: z.boolean(),
   })).optional(),
   notes: z.string().optional(),
-  url: z.string().url('Please enter a valid URL.').or(z.literal('')).optional(),
+  urls: z.array(z.object({
+    id: z.string(),
+    value: z.string().url({ message: "Please enter a valid URL." }).min(1, 'URL cannot be empty.'),
+  })).optional(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -41,6 +45,7 @@ interface EditTaskFormProps {
 }
 
 export function EditTaskForm({ task, onSubmit, onCancel }: EditTaskFormProps) {
+  const [isAiPanelOpen, setIsAiPanelOpen] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [generationPrompt, setGenerationPrompt] = useState('');
   const { toast } = useToast();
@@ -51,13 +56,18 @@ export function EditTaskForm({ task, onSubmit, onCancel }: EditTaskFormProps) {
       title: task.title,
       subtasks: task.subtasks || [],
       notes: task.notes || '',
-      url: task.url || '',
+      urls: task.urls || [],
     },
   });
 
-  const { fields, append, remove, replace } = useFieldArray({
+  const { fields: subtaskFields, append: appendSubtask, remove: removeSubtask, replace: replaceSubtasks } = useFieldArray({
     control: form.control,
     name: 'subtasks',
+  });
+
+  const { fields: urlFields, append: appendUrl, remove: removeUrl } = useFieldArray({
+    control: form.control,
+    name: 'urls',
   });
 
   const { isSubmitting } = form.formState;
@@ -89,7 +99,7 @@ export function EditTaskForm({ task, onSubmit, onCancel }: EditTaskFormProps) {
                 title: title,
                 completed: false,
             }));
-            replace(newSubtasks);
+            replaceSubtasks(newSubtasks);
             setGenerationPrompt('');
             toast({
                 title: 'Subtasks Generated',
@@ -117,105 +127,146 @@ export function EditTaskForm({ task, onSubmit, onCancel }: EditTaskFormProps) {
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
-        <FormField
-          control={form.control}
-          name="title"
-          render={({ field }) => (
+        <div className="flex flex-col md:flex-row gap-x-6">
+          <div className={cn("flex-1 space-y-4 transition-all duration-300", !isAiPanelOpen && "w-full")}>
+            <FormField
+              control={form.control}
+              name="title"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Title</FormLabel>
+                  <FormControl>
+                    <Input {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            
             <FormItem>
-              <FormLabel>Title</FormLabel>
-              <FormControl>
-                <Input {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        
-        <FormItem>
-            <FormLabel>Subtasks</FormLabel>
-            <div className="space-y-2">
-                {fields.map((field, index) => (
-                    <div key={field.id} className="flex items-center gap-2">
-                         <FormField
-                            control={form.control}
-                            name={`subtasks.${index}.completed`}
-                            render={({ field: checkboxField }) => (
-                              <FormControl>
-                                  <Input type="checkbox" checked={checkboxField.value} onChange={checkboxField.onChange} className="hidden" />
-                              </FormControl>
-                            )}
-                        />
-                        <FormField
-                            control={form.control}
-                            name={`subtasks.${index}.title`}
-                            render={({ field: inputField }) => (
+                <FormLabel>Subtasks</FormLabel>
+                <div className="space-y-2">
+                    {subtaskFields.map((field, index) => (
+                        <div key={field.id} className="flex items-center gap-2">
+                            <FormField
+                                control={form.control}
+                                name={`subtasks.${index}.completed`}
+                                render={({ field: checkboxField }) => (
                                 <FormControl>
-                                  <Input {...inputField} placeholder={`Subtask ${index + 1}`} />
+                                    <Input type="checkbox" checked={checkboxField.value} onChange={checkboxField.onChange} className="hidden" />
                                 </FormControl>
-                            )}
-                        />
-                        <Button type="button" variant="ghost" size="icon" onClick={() => remove(index)}>
+                                )}
+                            />
+                            <FormField
+                                control={form.control}
+                                name={`subtasks.${index}.title`}
+                                render={({ field: inputField }) => (
+                                    <FormControl>
+                                    <Input {...inputField} placeholder={`Subtask ${index + 1}`} />
+                                    </FormControl>
+                                )}
+                            />
+                            <Button type="button" variant="ghost" size="icon" onClick={() => removeSubtask(index)}>
+                                <X className="h-4 w-4" />
+                            </Button>
+                        </div>
+                    ))}
+                </div>
+                <div className="flex gap-2 mt-2">
+                    <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => appendSubtask({ id: crypto.randomUUID(), title: '', completed: false })}
+                    >
+                        Add Subtask
+                    </Button>
+                     <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setIsAiPanelOpen(prev => !prev)}
+                        disabled={isSubmitting || isGenerating}
+                    >
+                        <Sparkles className="mr-2 h-4 w-4" />
+                        {isAiPanelOpen ? 'Close AI Panel' : 'Generate with AI'}
+                    </Button>
+                </div>
+            </FormItem>
+            
+            <FormField
+              control={form.control}
+              name="notes"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Notes</FormLabel>
+                  <FormControl>
+                    <Textarea {...field} placeholder="Add some notes or feedback..." />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormItem>
+                <FormLabel>URLs</FormLabel>
+                <div className="space-y-2">
+                    {urlFields.map((field, index) => (
+                        <div key={field.id} className="flex items-center gap-2">
+                             <FormField
+                                control={form.control}
+                                name={`urls.${index}.value`}
+                                render={({ field: inputField }) => (
+                                    <FormControl>
+                                      <Input {...inputField} placeholder="https://example.com" />
+                                    </FormControl>
+                                )}
+                            />
+                            <Button type="button" variant="ghost" size="icon" onClick={() => removeUrl(index)}>
+                                <X className="h-4 w-4" />
+                            </Button>
+                        </div>
+                    ))}
+                </div>
+                 <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="mt-2"
+                    onClick={() => appendUrl({ id: crypto.randomUUID(), value: '' })}
+                >
+                    Add URL
+                </Button>
+            </FormItem>
+          </div>
+          
+          {isAiPanelOpen && (
+             <div className="w-full md:w-1/2 lg:w-2/5 md:border-l md:pl-6 space-y-4 mt-6 md:mt-0">
+                <div className="space-y-2">
+                    <div className="flex justify-between items-center">
+                        <FormLabel>Generate Subtasks with AI</FormLabel>
+                        <Button type="button" variant="ghost" size="icon" onClick={() => setIsAiPanelOpen(false)} className="md:hidden">
                             <X className="h-4 w-4" />
                         </Button>
                     </div>
-                ))}
-            </div>
-            <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                className="mt-2"
-                onClick={() => append({ id: crypto.randomUUID(), title: '', completed: false })}
-            >
-                Add Subtask
-            </Button>
-        </FormItem>
-        
-        <Separator />
-
-        <div className="space-y-2">
-          <FormLabel>Generate Subtasks with AI</FormLabel>
-          <Textarea 
-            placeholder="Provide a detailed description of what needs to be done, and the AI will break it down into subtasks..."
-            value={generationPrompt}
-            onChange={(e) => setGenerationPrompt(e.target.value)}
-            rows={3}
-          />
-          <Button type="button" onClick={handleGenerateSubtasks} disabled={isGenerating} className="w-full">
-            {isGenerating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
-            Generate Subtasks
-          </Button>
+                    <Textarea 
+                        placeholder="Provide a detailed description of what needs to be done, and the AI will break it down into subtasks..."
+                        value={generationPrompt}
+                        onChange={(e) => setGenerationPrompt(e.target.value)}
+                        rows={5}
+                    />
+                    <Button type="button" onClick={handleGenerateSubtasks} disabled={isGenerating} className="w-full">
+                        {isGenerating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
+                        Generate Subtasks
+                    </Button>
+                </div>
+                <Separator className="my-4"/>
+                <p className="text-xs text-muted-foreground">The AI will replace any existing subtasks with the newly generated ones.</p>
+             </div>
+          )}
         </div>
-        
-        <Separator />
 
-        <FormField
-          control={form.control}
-          name="notes"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Notes</FormLabel>
-              <FormControl>
-                <Textarea {...field} placeholder="Add some notes or feedback..." />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="url"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>URL</FormLabel>
-              <FormControl>
-                <Input {...field} placeholder="https://example.com" />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <div className="flex justify-end gap-2 pt-2">
+        <div className="flex justify-end gap-2 pt-4">
             <Button type="button" variant="ghost" onClick={onCancel} disabled={isSubmitting || isGenerating}>
                 Cancel
             </Button>
