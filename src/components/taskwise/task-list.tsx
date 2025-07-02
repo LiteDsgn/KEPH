@@ -21,6 +21,19 @@ export function TaskList({ tasks, onUpdateTask, onDeleteTask, search, setSearch 
 
   const filteredTasks = tasks.filter((task) => task.status === activeTab);
 
+  const sortTasks = (tasksToSort: Task[]) => {
+    return tasksToSort.sort((a, b) => {
+        if (activeTab === 'completed') {
+            return (b.completedAt?.getTime() || 0) - (a.completedAt?.getTime() || 0);
+        }
+        // Sort by due date, tasks with no due date last
+        if (a.dueDate && b.dueDate) return a.dueDate.getTime() - b.dueDate.getTime();
+        if (a.dueDate) return -1;
+        if (b.dueDate) return 1;
+        return b.createdAt.getTime() - a.createdAt.getTime();
+    });
+  }
+
   const renderTaskList = (tasksToRender: Task[]) => {
     if (tasksToRender.length === 0) {
       return (
@@ -31,8 +44,7 @@ export function TaskList({ tasks, onUpdateTask, onDeleteTask, search, setSearch 
     }
     return (
       <div className="space-y-3">
-        {tasksToRender
-        .sort((a,b) => b.createdAt.getTime() - a.createdAt.getTime())
+        {sortTasks(tasksToRender)
         .map((task) => (
           <TaskItem
             key={task.id}

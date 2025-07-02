@@ -13,9 +13,9 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator
 } from '@/components/ui/dropdown-menu';
-import { MoreHorizontal, Trash2, Archive, Circle, CheckCircle2, Edit, Link as LinkIcon, NotebookText } from 'lucide-react';
+import { MoreHorizontal, Trash2, Archive, Circle, CheckCircle2, Edit, Link as LinkIcon, NotebookText, CalendarDays } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { formatDistanceToNow } from 'date-fns';
+import { format, formatDistanceToNow, isPast, isToday } from 'date-fns';
 import { EditTaskForm } from './edit-task-form';
 import { Progress } from '../ui/progress';
 
@@ -29,11 +29,17 @@ export function TaskItem({ task, onUpdate, onDelete }: TaskItemProps) {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
   const handleCheck = (checked: boolean) => {
-    onUpdate(task.id, { status: checked ? 'completed' : 'current' });
+    onUpdate(task.id, { 
+        status: checked ? 'completed' : 'current',
+        completedAt: checked ? new Date() : undefined
+    });
   };
   
   const handleUpdateStatus = (status: TaskStatus) => {
-    onUpdate(task.id, { status });
+    onUpdate(task.id, { 
+        status,
+        completedAt: status === 'completed' ? new Date() : undefined
+     });
   }
 
   const handleEditSubmit = async (values: Partial<Omit<Task, 'id' | 'createdAt'>>) => {
@@ -134,9 +140,20 @@ export function TaskItem({ task, onUpdate, onDelete }: TaskItemProps) {
                 ))}
               </div>
             )}
-            <p className="text-xs text-muted-foreground pt-1">
-              {formatDistanceToNow(task.createdAt, { addSuffix: true })}
-            </p>
+            <div className="flex items-center justify-between pt-1 text-xs text-muted-foreground">
+                {task.dueDate ? (
+                    <div className={cn(
+                        "flex items-center gap-1.5",
+                        task.status !== 'completed' && isPast(task.dueDate) && !isToday(task.dueDate) ? "text-destructive" : ""
+                    )}>
+                        <CalendarDays className="h-3.5 w-3.5" />
+                        <span>{format(task.dueDate, 'MMM d')}</span>
+                    </div>
+                ) : <div />}
+                <p>
+                    {formatDistanceToNow(task.createdAt, { addSuffix: true })}
+                </p>
+            </div>
           </div>
 
           <DropdownMenu>

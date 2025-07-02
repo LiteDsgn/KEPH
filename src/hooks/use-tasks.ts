@@ -2,10 +2,10 @@
 
 import { useState, useCallback, useMemo, useEffect } from 'react';
 import type { Task, TaskStatus } from '@/types';
-import { isBefore, startOfToday } from 'date-fns';
+import { isBefore, startOfToday, subDays, addDays } from 'date-fns';
 
 const generateInitialTasks = (): Task[] => {
-  const today = startOfToday();
+  const today = new Date();
   const initialTasksData: Omit<Task, 'id'>[] = [
     {
       title: 'Review the quarterly report from 2 days ago',
@@ -17,6 +17,7 @@ const generateInitialTasks = (): Task[] => {
       createdAt: new Date(new Date().setDate(new Date().getDate() - 2)),
       notes: 'John mentioned to double check the figures with the finance team.',
       urls: [{ id: crypto.randomUUID(), value: 'https://example.com/reports/q4' }],
+      dueDate: subDays(today, 2),
     },
     {
       title: 'Send follow-up email to the design team',
@@ -27,6 +28,7 @@ const generateInitialTasks = (): Task[] => {
       createdAt: new Date(),
       notes: 'Waiting for their response to proceed.',
       urls: [],
+      dueDate: today,
     },
     {
       title: 'Prepare presentation for the weekly sync',
@@ -38,6 +40,8 @@ const generateInitialTasks = (): Task[] => {
       status: 'completed',
       createdAt: new Date(Date.now() - 24 * 60 * 60 * 1000),
       urls: [],
+      dueDate: subDays(today, 1),
+      completedAt: subDays(today, 1),
     },
       {
       title: 'Onboard new marketing intern',
@@ -47,15 +51,13 @@ const generateInitialTasks = (): Task[] => {
       ],
       status: 'pending',
       createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
-      urls: [{ id: crypto.randomUUID(), value: 'https://example.com/onboarding-docs' }]
+      urls: [{ id: crypto.randomUUID(), value: 'https://example.com/onboarding-docs' }],
+      dueDate: addDays(today, 3),
     },
   ];
 
   return initialTasksData.map(taskData => {
     const taskWithId = { ...taskData, id: crypto.randomUUID() };
-    if (taskWithId.status === 'current' && isBefore(new Date(taskWithId.createdAt), today)) {
-      return { ...taskWithId, status: 'pending' as TaskStatus };
-    }
     return taskWithId;
   });
 };
@@ -66,8 +68,13 @@ export function useTasks() {
   const [search, setSearch] = useState('');
 
   useEffect(() => {
-    // Generate tasks on client-side only to avoid hydration issues
-    setTasks(generateInitialTasks());
+    const tasksWithInitialStatus = generateInitialTasks().map(task => {
+        if (task.status === 'current' && task.dueDate && isBefore(task.dueDate, startOfToday())) {
+          return { ...task, status: 'pending' as TaskStatus };
+        }
+        return task;
+      });
+    setTasks(tasksWithInitialStatus);
   }, []);
 
   const addTasks = useCallback((newTasksData: Array<{ title: string; subtasks?: string[] }>) => {
@@ -84,12 +91,13 @@ export function useTasks() {
       status: 'current',
       createdAt: new Date(),
       notes: '',
-      urls: []
+      urls: [],
+      dueDate: new Date(),
     }));
     setTasks((prev) => [...newTasks, ...prev]);
   }, []);
 
-  const addTask = useCallback((taskData: Omit<Task, 'id' | 'status' | 'createdAt'>) => {
+  const addTask = useCallback((taskData: Omit<Task, 'id' | 'status' | 'createdAt' | 'completedAt'>) => {
     const newTask: Task = {
       id: crypto.randomUUID(),
       ...taskData,
@@ -101,7 +109,19 @@ export function useTasks() {
 
   const updateTask = useCallback((taskId: string, updates: Partial<Omit<Task, 'id' | 'createdAt'>>) => {
     setTasks((prev) =>
-      prev.map((task) => (task.id === taskId ? { ...task, ...updates } : task))
+      prev.map((task) => {
+        if (task.id === taskId) {
+            const updatedTask = { ...task, ...updates };
+            if (updates.status === 'completed' && !task.completedAt) {
+                updatedTask.completedAt = new Date();
+            }
+            if (updates.status && updates.status !== 'completed' && task.status === 'completed') {
+                updatedTask.completedAt = undefined;
+            }
+            return updatedTask;
+        }
+        return task;
+    })
     );
   }, []);
 

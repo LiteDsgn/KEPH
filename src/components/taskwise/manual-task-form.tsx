@@ -16,8 +16,12 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, PlusCircle, X } from 'lucide-react';
+import { Loader2, PlusCircle, X, CalendarIcon } from 'lucide-react';
 import type { Task } from '@/types';
+import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
+import { cn } from '@/lib/utils';
+import { format } from 'date-fns';
+import { Calendar } from '../ui/calendar';
 
 const formSchema = z.object({
   title: z.string().min(1, 'Task title cannot be empty.'),
@@ -28,12 +32,13 @@ const formSchema = z.object({
   urls: z.array(z.object({
     value: z.string().url({ message: "Please enter a valid URL." }).min(1, 'URL cannot be empty.'),
   })).optional(),
+  dueDate: z.date().optional(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
 
 interface ManualTaskFormProps {
-  onTaskCreated: (taskData: Omit<Task, 'id' | 'status' | 'createdAt'>) => void;
+  onTaskCreated: (taskData: Omit<Task, 'id' | 'status' | 'createdAt' | 'completedAt'>) => void;
 }
 
 export function ManualTaskForm({ onTaskCreated }: ManualTaskFormProps) {
@@ -47,6 +52,7 @@ export function ManualTaskForm({ onTaskCreated }: ManualTaskFormProps) {
       subtasks: [],
       notes: '',
       urls: [],
+      dueDate: undefined,
     },
   });
 
@@ -75,6 +81,7 @@ export function ManualTaskForm({ onTaskCreated }: ManualTaskFormProps) {
             title: st.title,
             completed: false,
         })),
+        dueDate: values.dueDate,
       });
       form.reset();
       toast({
@@ -111,6 +118,45 @@ export function ManualTaskForm({ onTaskCreated }: ManualTaskFormProps) {
               )}
             />
             
+            <FormField
+              control={form.control}
+              name="dueDate"
+              render={({ field }) => (
+                <FormItem className="flex flex-col">
+                  <FormLabel>Due Date</FormLabel>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <FormControl>
+                        <Button
+                          variant={"outline"}
+                          className={cn(
+                            "w-full justify-start text-left font-normal",
+                            !field.value && "text-muted-foreground"
+                          )}
+                        >
+                          <CalendarIcon className="mr-2 h-4 w-4" />
+                          {field.value ? (
+                            format(field.value, "PPP")
+                          ) : (
+                            <span>Pick a date</span>
+                          )}
+                        </Button>
+                      </FormControl>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={field.value}
+                        onSelect={field.onChange}
+                        initialFocus
+                      />
+                    </PopoverContent>
+                  </Popover>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
             <FormItem>
                 <FormLabel>Subtasks (Optional)</FormLabel>
                 <div className="space-y-2">

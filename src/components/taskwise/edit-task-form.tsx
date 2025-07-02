@@ -16,11 +16,14 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import type { Task } from '@/types';
-import { Loader2, X, Sparkles } from 'lucide-react';
+import { Loader2, X, Sparkles, CalendarIcon } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { generateSubtasks } from '@/ai/flows/generate-subtasks';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
+import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
+import { Calendar } from '../ui/calendar';
+import { format } from 'date-fns';
 
 const formSchema = z.object({
   title: z.string().min(1, 'Task title cannot be empty.'),
@@ -34,13 +37,14 @@ const formSchema = z.object({
     id: z.string(),
     value: z.string().url({ message: "Please enter a valid URL." }).min(1, 'URL cannot be empty.'),
   })).optional(),
+  dueDate: z.date().optional(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
 
 interface EditTaskFormProps {
   task: Task;
-  onSubmit: (values: FormValues) => Promise<void>;
+  onSubmit: (values: Partial<Omit<Task, 'id' | 'createdAt'>>) => Promise<void>;
   onCancel: () => void;
 }
 
@@ -57,6 +61,7 @@ export function EditTaskForm({ task, onSubmit, onCancel }: EditTaskFormProps) {
       subtasks: task.subtasks || [],
       notes: task.notes || '',
       urls: task.urls || [],
+      dueDate: task.dueDate,
     },
   });
 
@@ -138,6 +143,45 @@ export function EditTaskForm({ task, onSubmit, onCancel }: EditTaskFormProps) {
                   <FormControl>
                     <Input {...field} />
                   </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="dueDate"
+              render={({ field }) => (
+                <FormItem className="flex flex-col">
+                  <FormLabel>Due Date</FormLabel>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <FormControl>
+                        <Button
+                          variant={"outline"}
+                          className={cn(
+                            "w-full justify-start text-left font-normal",
+                            !field.value && "text-muted-foreground"
+                          )}
+                        >
+                          <CalendarIcon className="mr-2 h-4 w-4" />
+                          {field.value ? (
+                            format(field.value, "PPP")
+                          ) : (
+                            <span>Pick a date</span>
+                          )}
+                        </Button>
+                      </FormControl>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={field.value}
+                        onSelect={field.onChange}
+                        initialFocus
+                      />
+                    </PopoverContent>
+                  </Popover>
                   <FormMessage />
                 </FormItem>
               )}

@@ -19,4 +19,6 @@ export interface Task {
   createdAt: Date;
   notes?: string;
   urls?: Url[];
+  dueDate?: Date;
+  completedAt?: Date;
 }
