@@ -18,7 +18,7 @@ import {
 import { Button } from '../ui/button';
 
 interface TaskInputAreaProps {
-  onTasksCreated: (tasks: string[]) => void;
+  onTasksCreated: (tasks: Array<{ title: string; description?: string }>) => void;
   onTaskCreated: (taskData: Omit<Task, 'id' | 'status' | 'createdAt'>) => void;
 }
 

@@ -18,7 +18,19 @@ const TranscriptToTasksInputSchema = z.object({
 export type TranscriptToTasksInput = z.infer<typeof TranscriptToTasksInputSchema>;
 
 const TranscriptToTasksOutputSchema = z.object({
-  tasks: z.array(z.string()).describe('A list of tasks extracted from the transcript.'),
+  tasks: z
+    .array(
+      z.object({
+        title: z.string().describe('A short, actionable task title.'),
+        description: z
+          .string()
+          .optional()
+          .describe(
+            'A more detailed description of the task, explaining the context and what needs to be done.'
+          ),
+      })
+    )
+    .describe('A list of actionable tasks.'),
 });
 export type TranscriptToTasksOutput = z.infer<typeof TranscriptToTasksOutputSchema>;
 
@@ -32,11 +44,11 @@ const prompt = ai.definePrompt({
   output: {schema: TranscriptToTasksOutputSchema},
   prompt: `You are an AI assistant that extracts actionable tasks from a meeting transcript.
 
-  Given the following meeting transcript, identify the tasks that need to be done and create a todo list.
-  Format the output as a JSON array of strings.
+  Given the following meeting transcript, identify the tasks that need to be done.
+  For each task, provide a concise 'title' and a detailed 'description'. The title should be a clear summary of the action item.
 
   {{#if instructions}}
-  Please follow these instructions when creating the tasks:
+  You MUST follow these instructions precisely when creating the tasks:
   {{instructions}}
   {{/if}}
 

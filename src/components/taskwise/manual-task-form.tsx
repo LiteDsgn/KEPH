@@ -20,7 +20,8 @@ import { Loader2, PlusCircle } from 'lucide-react';
 import type { Task } from '@/types';
 
 const formSchema = z.object({
-  content: z.string().min(1, 'Task content cannot be empty.'),
+  title: z.string().min(1, 'Task title cannot be empty.'),
+  description: z.string().optional(),
   notes: z.string().optional(),
   url: z.string().url('Please enter a valid URL.').or(z.literal('')).optional(),
 });
@@ -38,7 +39,8 @@ export function ManualTaskForm({ onTaskCreated }: ManualTaskFormProps) {
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      content: '',
+      title: '',
+      description: '',
       notes: '',
       url: '',
     },
@@ -71,16 +73,29 @@ export function ManualTaskForm({ onTaskCreated }: ManualTaskFormProps) {
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <FormField
             control={form.control}
-            name="content"
+            name="title"
             render={({ field }) => (
                 <FormItem>
-                <FormLabel>Task</FormLabel>
+                <FormLabel>Task Title</FormLabel>
                 <FormControl>
                     <Input placeholder="e.g., Buy milk" {...field} />
                 </FormControl>
                 <FormMessage />
                 </FormItem>
             )}
+            />
+            <FormField
+                control={form.control}
+                name="description"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>Description (Optional)</FormLabel>
+                    <FormControl>
+                        <Textarea {...field} placeholder="Add a detailed description..." />
+                    </FormControl>
+                    <FormMessage />
+                    </FormItem>
+                )}
             />
              <FormField
                 control={form.control}
@@ -89,7 +104,7 @@ export function ManualTaskForm({ onTaskCreated }: ManualTaskFormProps) {
                     <FormItem>
                     <FormLabel>Notes (Optional)</FormLabel>
                     <FormControl>
-                        <Textarea {...field} placeholder="Add any details or context here" />
+                        <Textarea {...field} placeholder="Add feedback or other notes here" />
                     </FormControl>
                     <FormMessage />
                     </FormItem>

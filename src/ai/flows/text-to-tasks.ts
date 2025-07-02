@@ -17,7 +17,19 @@ const TextToTasksInputSchema = z.object({
 export type TextToTasksInput = z.infer<typeof TextToTasksInputSchema>;
 
 const TextToTasksOutputSchema = z.object({
-  tasks: z.array(z.string()).describe('A list of actionable tasks.'),
+  tasks: z
+    .array(
+      z.object({
+        title: z.string().describe('A short, actionable task title.'),
+        description: z
+          .string()
+          .optional()
+          .describe(
+            'A more detailed description of the task, explaining the context and what needs to be done.'
+          ),
+      })
+    )
+    .describe('A list of actionable tasks.'),
 });
 export type TextToTasksOutput = z.infer<typeof TextToTasksOutputSchema>;
 
@@ -31,11 +43,12 @@ const prompt = ai.definePrompt({
   output: {schema: TextToTasksOutputSchema},
   prompt: `You are a personal assistant that is good at creating todo lists from plans.
 
-  Create a todo list of actionable tasks from the following description:
+  Create a todo list of actionable tasks from the following description.
+  For each task, provide a concise 'title' and a more detailed 'description'.
+  The title should be a clear action item. The description should provide any necessary context or details.
 
+  Description:
   {{description}}
-
-  The todo list should be a list of strings.
   `,
 });
 

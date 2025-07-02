@@ -31,7 +31,7 @@ const formSchema = z.object({
 });
 
 interface TranscriptToTasksFormProps {
-  onTasksCreated: (tasks: string[]) => void;
+  onTasksCreated: (tasks: Array<{ title: string; description?: string }>) => void;
 }
 
 export function TranscriptToTasksForm({ onTasksCreated }: TranscriptToTasksFormProps) {

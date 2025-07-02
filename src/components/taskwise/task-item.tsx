@@ -13,7 +13,7 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator
 } from '@/components/ui/dropdown-menu';
-import { MoreHorizontal, Trash2, Archive, Circle, CheckCircle2, Edit, Link as LinkIcon, NotebookText } from 'lucide-react';
+import { MoreHorizontal, Trash2, Archive, Circle, CheckCircle2, Edit, Link as LinkIcon, NotebookText, MessageSquareText } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { formatDistanceToNow } from 'date-fns';
 import { EditTaskForm } from './edit-task-form';
@@ -35,7 +35,7 @@ export function TaskItem({ task, onUpdate, onDelete }: TaskItemProps) {
     onUpdate(task.id, { status });
   }
 
-  const handleEditSubmit = async (values: { content: string; notes?: string; url?: string }) => {
+  const handleEditSubmit = async (values: { title: string; description?: string; notes?: string; url?: string }) => {
     onUpdate(task.id, values);
     setIsEditDialogOpen(false);
   };
@@ -65,8 +65,14 @@ export function TaskItem({ task, onUpdate, onDelete }: TaskItemProps) {
                 task.status === 'completed' && 'line-through text-muted-foreground'
               )}
             >
-              {task.content}
+              {task.title}
             </div>
+            {task.description && (
+                <p className="text-sm text-muted-foreground flex items-start gap-2">
+                    <MessageSquareText className="w-4 h-4 mt-0.5 shrink-0" />
+                    <span className="whitespace-pre-wrap">{task.description}</span>
+                </p>
+            )}
             {task.notes && (
                 <p className="text-sm text-muted-foreground flex items-start gap-2">
                     <NotebookText className="w-4 h-4 mt-0.5 shrink-0" />

@@ -6,42 +6,43 @@ import { isBefore, startOfToday } from 'date-fns';
 
 const generateInitialTasks = (): Task[] => {
   const today = startOfToday();
-  const initialTasksData: Task[] = [
+  const initialTasksData: Omit<Task, 'id'>[] = [
     {
-      id: '1',
-      content: 'Review the quarterly report from 2 days ago',
+      title: 'Review the quarterly report from 2 days ago',
+      description: 'Focus on the Q4 growth metrics. The charts on page 5 need verification.',
       status: 'current',
       createdAt: new Date(new Date().setDate(new Date().getDate() - 2)),
-      notes: 'Focus on the Q4 growth metrics. The charts on page 5 need verification.',
+      notes: 'John mentioned to double check the figures with the finance team.',
       url: 'https://example.com/reports/q4',
     },
     {
-      id: '2',
-      content: 'Send follow-up email to the design team',
+      title: 'Send follow-up email to the design team',
+      description: 'Ask about the new mockups for the landing page.',
       status: 'current',
       createdAt: new Date(),
-      notes: 'Ask about the new mockups for the landing page.',
+      notes: 'Waiting for their response to proceed.',
     },
     {
-      id: '3',
-      content: 'Prepare presentation for the weekly sync',
+      title: 'Prepare presentation for the weekly sync',
+      description: 'Slides should cover progress, blockers, and next steps.',
       status: 'completed',
       createdAt: new Date(Date.now() - 24 * 60 * 60 * 1000),
     },
       {
-      id: '4',
-      content: 'Onboard new marketing intern',
+      title: 'Onboard new marketing intern',
+      description: 'Go through the onboarding checklist and introduce them to the team.',
       status: 'pending',
       createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
       url: 'https://example.com/onboarding-docs'
     },
   ];
 
-  return initialTasksData.map(task => {
-    if (task.status === 'current' && isBefore(new Date(task.createdAt), today)) {
-      return { ...task, status: 'pending' as TaskStatus };
+  return initialTasksData.map(taskData => {
+    const taskWithId = { ...taskData, id: crypto.randomUUID() };
+    if (taskWithId.status === 'current' && isBefore(new Date(taskWithId.createdAt), today)) {
+      return { ...taskWithId, status: 'pending' as TaskStatus };
     }
-    return task;
+    return taskWithId;
   });
 };
 
@@ -51,13 +52,15 @@ export function useTasks() {
   const [search, setSearch] = useState('');
 
   useEffect(() => {
+    // Generate tasks on client-side only to avoid hydration issues
     setTasks(generateInitialTasks());
   }, []);
 
-  const addTasks = useCallback((newTasksContent: string[]) => {
-    const newTasks: Task[] = newTasksContent.map((content) => ({
+  const addTasks = useCallback((newTasksData: Array<{ title: string; description?: string }>) => {
+    const newTasks: Task[] = newTasksData.map((data) => ({
       id: crypto.randomUUID(),
-      content,
+      title: data.title,
+      description: data.description || '',
       status: 'current',
       createdAt: new Date(),
       notes: '',
@@ -87,8 +90,13 @@ export function useTasks() {
   }, []);
   
   const searchedTasks = useMemo(() => {
+    if (!search) {
+      return tasks;
+    }
     return tasks.filter((task) =>
-      task.content.toLowerCase().includes(search.toLowerCase())
+      (task.title.toLowerCase().includes(search.toLowerCase())) ||
+      (task.description?.toLowerCase().includes(search.toLowerCase())) ||
+      (task.notes?.toLowerCase().includes(search.toLowerCase()))
     );
   }, [tasks, search]);
 

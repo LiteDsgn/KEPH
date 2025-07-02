@@ -27,7 +27,7 @@ const formSchema = z.object({
 });
 
 interface TextToTasksFormProps {
-  onTasksCreated: (tasks: string[]) => void;
+  onTasksCreated: (tasks: Array<{ title: string; description?: string }>) => void;
 }
 
 export function TextToTasksForm({ onTasksCreated }: TextToTasksFormProps) {

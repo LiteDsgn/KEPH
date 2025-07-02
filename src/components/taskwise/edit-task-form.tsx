@@ -18,7 +18,8 @@ import type { Task } from '@/types';
 import { Loader2 } from 'lucide-react';
 
 const formSchema = z.object({
-  content: z.string().min(1, 'Task content cannot be empty.'),
+  title: z.string().min(1, 'Task title cannot be empty.'),
+  description: z.string().optional(),
   notes: z.string().optional(),
   url: z.string().url('Please enter a valid URL.').or(z.literal('')).optional(),
 });
@@ -35,7 +36,8 @@ export function EditTaskForm({ task, onSubmit, onCancel }: EditTaskFormProps) {
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      content: task.content,
+      title: task.title,
+      description: task.description || '',
       notes: task.notes || '',
       url: task.url || '',
     },
@@ -53,12 +55,25 @@ export function EditTaskForm({ task, onSubmit, onCancel }: EditTaskFormProps) {
       <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
         <FormField
           control={form.control}
-          name="content"
+          name="title"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Task</FormLabel>
+              <FormLabel>Title</FormLabel>
               <FormControl>
                 <Input {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="description"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Description</FormLabel>
+              <FormControl>
+                <Textarea {...field} placeholder="Add a detailed description..." />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -71,7 +86,7 @@ export function EditTaskForm({ task, onSubmit, onCancel }: EditTaskFormProps) {
             <FormItem>
               <FormLabel>Notes</FormLabel>
               <FormControl>
-                <Textarea {...field} placeholder="Add some notes..." />
+                <Textarea {...field} placeholder="Add some notes or feedback..." />
               </FormControl>
               <FormMessage />
             </FormItem>

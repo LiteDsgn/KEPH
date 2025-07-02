@@ -22,7 +22,17 @@ export type VoiceToTasksInput = z.infer<typeof VoiceToTasksInputSchema>;
 
 const VoiceToTasksOutputSchema = z.object({
   tasks: z
-    .array(z.string())
+    .array(
+      z.object({
+        title: z.string().describe('A short, actionable task title.'),
+        description: z
+          .string()
+          .optional()
+          .describe(
+            'A more detailed description of the task, explaining the context and what needs to be done.'
+          ),
+      })
+    )
     .describe('A list of tasks extracted from the user speech.'),
 });
 export type VoiceToTasksOutput = z.infer<typeof VoiceToTasksOutputSchema>;
@@ -39,17 +49,27 @@ const prompt = ai.definePrompt({
 
   Here is the user's speech recording: {{media url=speechDataUri}}
 
-  Extract the tasks from the speech and return them as a list of strings.
-  Each task should be concise and actionable.
+  Extract the tasks from the speech. For each task, create a short 'title' and a 'description' with more details.
+  The title should be concise and actionable. The description should elaborate on the task.
   Do not include any introductory or concluding remarks.
-  Return only a JSON-formatted array of strings.
 
-  Example:
-  [
-    "Book a dentist appointment",
-    "Buy groceries",
-    "Finish the presentation"
-  ]
+  Example Output:
+  {
+    "tasks": [
+      {
+        "title": "Book dentist appointment",
+        "description": "Call Dr. Smith's office to schedule a check-up for next week."
+      },
+      {
+        "title": "Buy groceries",
+        "description": "Need to buy milk, eggs, bread, and chicken for dinner."
+      },
+      {
+        "title": "Finish the presentation",
+        "description": "Complete the slides for the Q3 review meeting, focusing on the marketing a-nalytics section."
+      }
+    ]
+  }
   `,
 });
 
