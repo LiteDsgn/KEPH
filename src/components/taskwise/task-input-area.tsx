@@ -75,7 +75,7 @@ export function TaskInputArea({ onTasksCreated, onTaskCreated }: TaskInputAreaPr
               </Button>
             </div>
           </DialogTrigger>
-          <DialogContent className="sm:max-w-2xl">
+          <DialogContent className="sm:max-w-3xl">
             <DialogHeader>
               <DialogTitle>Add a New Task</DialogTitle>
             </DialogHeader>
