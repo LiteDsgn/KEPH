@@ -39,9 +39,10 @@ type FormValues = z.infer<typeof formSchema>;
 
 interface ManualTaskFormProps {
   onTaskCreated: (taskData: Omit<Task, 'id' | 'status' | 'createdAt' | 'completedAt'>) => void;
+  onCancel: () => void;
 }
 
-export function ManualTaskForm({ onTaskCreated }: ManualTaskFormProps) {
+export function ManualTaskForm({ onTaskCreated, onCancel }: ManualTaskFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
 
@@ -233,10 +234,15 @@ export function ManualTaskForm({ onTaskCreated }: ManualTaskFormProps) {
                 </Button>
             </FormItem>
 
-            <Button type="submit" disabled={isSubmitting} className="w-full">
-            {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <PlusCircle className="mr-2 h-4 w-4" />}
-            Add Task
-            </Button>
+            <div className="flex justify-end gap-2 pt-4">
+              <Button type="button" variant="ghost" onClick={onCancel} disabled={isSubmitting}>
+                  Cancel
+              </Button>
+              <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <PlusCircle className="mr-2 h-4 w-4" />}
+                Add Task
+              </Button>
+            </div>
         </form>
         </Form>
     </div>

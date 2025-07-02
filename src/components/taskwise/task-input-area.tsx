@@ -10,12 +10,14 @@ import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Separator } from '../ui/separator';
 import { ManualTaskForm } from './manual-task-form';
 import type { Task } from '@/types';
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from '@/components/ui/collapsible';
 import { Button } from '../ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
 
 interface TaskInputAreaProps {
   onTasksCreated: (tasks: Array<{ title: string; subtasks?: string[] }>) => void;
@@ -64,19 +66,25 @@ export function TaskInputArea({ onTasksCreated, onTaskCreated }: TaskInputAreaPr
 
         <Separator className="my-6" />
 
-        <Collapsible open={isManualFormOpen} onOpenChange={setIsManualFormOpen}>
-          <CollapsibleTrigger asChild>
+        <Dialog open={isManualFormOpen} onOpenChange={setIsManualFormOpen}>
+          <DialogTrigger asChild>
             <div className="flex justify-center">
               <Button variant="ghost" className="w-full">
                 <PlusCircle className="mr-2 h-4 w-4" />
                 Add a task manually
               </Button>
             </div>
-          </CollapsibleTrigger>
-          <CollapsibleContent className="mt-4">
-            <ManualTaskForm onTaskCreated={handleManualTaskCreated} />
-          </CollapsibleContent>
-        </Collapsible>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>Add a New Task</DialogTitle>
+            </DialogHeader>
+            <ManualTaskForm
+              onTaskCreated={handleManualTaskCreated}
+              onCancel={() => setIsManualFormOpen(false)}
+            />
+          </DialogContent>
+        </Dialog>
       </CardContent>
     </Card>
   );
