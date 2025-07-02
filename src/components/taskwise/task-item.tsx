@@ -43,29 +43,30 @@ export function TaskItem({ task, onUpdate, onDelete }: TaskItemProps) {
   return (
     <>
       <Card
+        onClick={() => setIsEditDialogOpen(true)}
         className={cn(
-          'transition-all duration-300 ease-in-out',
-          task.status === 'completed' && 'bg-muted/50'
+          'transition-all duration-200 ease-in-out hover:shadow-lg cursor-pointer',
+          task.status === 'completed' && 'bg-muted/50 hover:bg-muted'
         )}
       >
         <CardContent className="p-4 flex items-start gap-4">
-          <Checkbox
-            id={`task-${task.id}`}
-            checked={task.status === 'completed'}
-            onCheckedChange={handleCheck}
-            aria-label={`Mark task as ${task.status === 'completed' ? 'current' : 'completed'}`}
-            className="mt-1"
-          />
+          <div className="mt-1 flex items-center" onClick={(e) => e.stopPropagation()}>
+            <Checkbox
+                id={`task-${task.id}`}
+                checked={task.status === 'completed'}
+                onCheckedChange={handleCheck}
+                aria-label={`Mark task as ${task.status === 'completed' ? 'current' : 'completed'}`}
+            />
+          </div>
           <div className="flex-grow space-y-2">
-            <label
-              htmlFor={`task-${task.id}`}
+            <div
               className={cn(
-                'font-medium transition-colors cursor-pointer',
+                'font-medium',
                 task.status === 'completed' && 'line-through text-muted-foreground'
               )}
             >
               {task.content}
-            </label>
+            </div>
             {task.notes && (
                 <p className="text-sm text-muted-foreground flex items-start gap-2">
                     <NotebookText className="w-4 h-4 mt-0.5 shrink-0" />
@@ -91,7 +92,7 @@ export function TaskItem({ task, onUpdate, onDelete }: TaskItemProps) {
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0">
+              <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={(e) => e.stopPropagation()}>
                 <MoreHorizontal className="h-4 w-4" />
                 <span className="sr-only">More options</span>
               </Button>

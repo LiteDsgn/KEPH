@@ -66,8 +66,7 @@ export function ManualTaskForm({ onTaskCreated }: ManualTaskFormProps) {
   }
 
   return (
-    <div className="space-y-4">
-        <h3 className="text-lg font-medium">Add a Task Manually</h3>
+    <div className="space-y-4 pt-2">
         <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <FormField

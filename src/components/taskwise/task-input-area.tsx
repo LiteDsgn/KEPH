@@ -1,14 +1,21 @@
 'use client';
 
+import { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { TextToTasksForm } from './text-to-tasks-form';
 import { TranscriptToTasksForm } from './transcript-to-tasks-form';
 import { VoiceRecorder } from './voice-recorder';
-import { FileText, ClipboardList, Mic } from 'lucide-react';
+import { FileText, ClipboardList, Mic, PlusCircle } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Separator } from '../ui/separator';
 import { ManualTaskForm } from './manual-task-form';
 import type { Task } from '@/types';
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '@/components/ui/collapsible';
+import { Button } from '../ui/button';
 
 interface TaskInputAreaProps {
   onTasksCreated: (tasks: string[]) => void;
@@ -16,6 +23,13 @@ interface TaskInputAreaProps {
 }
 
 export function TaskInputArea({ onTasksCreated, onTaskCreated }: TaskInputAreaProps) {
+  const [isManualFormOpen, setIsManualFormOpen] = useState(false);
+
+  const handleManualTaskCreated = (taskData: Omit<Task, 'id' | 'status' | 'createdAt'>) => {
+    onTaskCreated(taskData);
+    setIsManualFormOpen(false);
+  };
+
   return (
     <Card>
       <CardHeader>
@@ -50,7 +64,19 @@ export function TaskInputArea({ onTasksCreated, onTaskCreated }: TaskInputAreaPr
 
         <Separator className="my-6" />
 
-        <ManualTaskForm onTaskCreated={onTaskCreated} />
+        <Collapsible open={isManualFormOpen} onOpenChange={setIsManualFormOpen}>
+          <CollapsibleTrigger asChild>
+            <div className="flex justify-center">
+              <Button variant="ghost" className="w-full">
+                <PlusCircle className="mr-2 h-4 w-4" />
+                Add a task manually
+              </Button>
+            </div>
+          </CollapsibleTrigger>
+          <CollapsibleContent className="mt-4">
+            <ManualTaskForm onTaskCreated={handleManualTaskCreated} />
+          </CollapsibleContent>
+        </Collapsible>
       </CardContent>
     </Card>
   );
