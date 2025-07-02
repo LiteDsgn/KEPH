@@ -1,43 +1,43 @@
 'use client';
 
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useEffect } from 'react';
 import type { Task, TaskStatus } from '@/types';
 import { isBefore, startOfToday } from 'date-fns';
 
-const initialTasks: Task[] = [
-  {
-    id: '1',
-    content: 'Review the quarterly report from 2 days ago',
-    status: 'current',
-    createdAt: new Date(new Date().setDate(new Date().getDate() - 2)),
-    notes: 'Focus on the Q4 growth metrics. The charts on page 5 need verification.',
-    url: 'https://example.com/reports/q4',
-  },
-  {
-    id: '2',
-    content: 'Send follow-up email to the design team',
-    status: 'current',
-    createdAt: new Date(),
-    notes: 'Ask about the new mockups for the landing page.',
-  },
-  {
-    id: '3',
-    content: 'Prepare presentation for the weekly sync',
-    status: 'completed',
-    createdAt: new Date(Date.now() - 24 * 60 * 60 * 1000),
-  },
-    {
-    id: '4',
-    content: 'Onboard new marketing intern',
-    status: 'pending',
-    createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
-    url: 'https://example.com/onboarding-docs'
-  },
-];
-
-const getInitialTasks = (): Task[] => {
+const generateInitialTasks = (): Task[] => {
   const today = startOfToday();
-  return initialTasks.map(task => {
+  const initialTasksData: Task[] = [
+    {
+      id: '1',
+      content: 'Review the quarterly report from 2 days ago',
+      status: 'current',
+      createdAt: new Date(new Date().setDate(new Date().getDate() - 2)),
+      notes: 'Focus on the Q4 growth metrics. The charts on page 5 need verification.',
+      url: 'https://example.com/reports/q4',
+    },
+    {
+      id: '2',
+      content: 'Send follow-up email to the design team',
+      status: 'current',
+      createdAt: new Date(),
+      notes: 'Ask about the new mockups for the landing page.',
+    },
+    {
+      id: '3',
+      content: 'Prepare presentation for the weekly sync',
+      status: 'completed',
+      createdAt: new Date(Date.now() - 24 * 60 * 60 * 1000),
+    },
+      {
+      id: '4',
+      content: 'Onboard new marketing intern',
+      status: 'pending',
+      createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
+      url: 'https://example.com/onboarding-docs'
+    },
+  ];
+
+  return initialTasksData.map(task => {
     if (task.status === 'current' && isBefore(new Date(task.createdAt), today)) {
       return { ...task, status: 'pending' as TaskStatus };
     }
@@ -47,8 +47,12 @@ const getInitialTasks = (): Task[] => {
 
 
 export function useTasks() {
-  const [tasks, setTasks] = useState<Task[]>(getInitialTasks);
+  const [tasks, setTasks] = useState<Task[]>([]);
   const [search, setSearch] = useState('');
+
+  useEffect(() => {
+    setTasks(generateInitialTasks());
+  }, []);
 
   const addTasks = useCallback((newTasksContent: string[]) => {
     const newTasks: Task[] = newTasksContent.map((content) => ({
