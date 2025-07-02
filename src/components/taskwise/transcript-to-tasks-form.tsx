@@ -23,7 +23,7 @@ const formSchema = z.object({
   transcript: z
     .string()
     .min(20, { message: 'Please enter a transcript of at least 20 characters.' })
-    .max(5000, { message: 'Transcript cannot exceed 5000 characters.' }),
+    .max(200000, { message: 'Transcript cannot exceed 200,000 characters.' }),
 });
 
 interface TranscriptToTasksFormProps {
