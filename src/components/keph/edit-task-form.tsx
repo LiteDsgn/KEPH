@@ -16,7 +16,7 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import type { Task } from '@/types';
-import { Loader2, X, Sparkles, CalendarIcon, GripVertical } from 'lucide-react';
+import { Loader2, X, Sparkles, CalendarIcon, GripVertical, PlusCircle } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { generateSubtasks } from '@/ai/flows/generate-subtasks';
 import { useToast } from '@/hooks/use-toast';
@@ -52,6 +52,7 @@ export function EditTaskForm({ task, onSubmit, onCancel }: EditTaskFormProps) {
   const [isAiPanelOpen, setIsAiPanelOpen] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [generationPrompt, setGenerationPrompt] = useState('');
+  const [suggestedSubtasks, setSuggestedSubtasks] = useState<string[]>([]);
   const { toast } = useToast();
 
   const form = useForm<FormValues>({
@@ -65,7 +66,7 @@ export function EditTaskForm({ task, onSubmit, onCancel }: EditTaskFormProps) {
     },
   });
 
-  const { fields: subtaskFields, append: appendSubtask, remove: removeSubtask, replace: replaceSubtasks, move: moveSubtask } = useFieldArray({
+  const { fields: subtaskFields, append: appendSubtask, remove: removeSubtask, move: moveSubtask } = useFieldArray({
     control: form.control,
     name: 'subtasks',
   });
@@ -112,6 +113,7 @@ export function EditTaskForm({ task, onSubmit, onCancel }: EditTaskFormProps) {
         return;
     }
     setIsGenerating(true);
+    setSuggestedSubtasks([]);
     try {
         const result = await generateSubtasks({
             taskTitle: form.getValues('title'),
@@ -119,16 +121,11 @@ export function EditTaskForm({ task, onSubmit, onCancel }: EditTaskFormProps) {
         });
         
         if (result.subtasks && result.subtasks.length > 0) {
-            const newSubtasks = result.subtasks.map(title => ({
-                id: crypto.randomUUID(),
-                title: title,
-                completed: false,
-            }));
-            replaceSubtasks(newSubtasks);
+            setSuggestedSubtasks(result.subtasks);
             setGenerationPrompt('');
             toast({
-                title: 'Subtasks Generated',
-                description: `${newSubtasks.length} subtasks have been added to your task.`
+                title: 'Subtasks Suggested',
+                description: `The AI suggested ${result.subtasks.length} subtasks. Review and add them below.`
             })
         } else {
             toast({
@@ -148,6 +145,15 @@ export function EditTaskForm({ task, onSubmit, onCancel }: EditTaskFormProps) {
         setIsGenerating(false);
     }
   }
+
+  const handleAddSuggestedSubtask = (title: string) => {
+    appendSubtask({ id: crypto.randomUUID(), title, completed: false });
+    setSuggestedSubtasks(prev => prev.filter(st => st !== title));
+    toast({
+        title: `Subtask Added`,
+        description: `"${title}" was added to the task.`
+    })
+  };
 
   return (
     <Form {...form}>
@@ -333,8 +339,29 @@ export function EditTaskForm({ task, onSubmit, onCancel }: EditTaskFormProps) {
                         Generate Subtasks
                     </Button>
                 </div>
+
+                {suggestedSubtasks.length > 0 && (
+                    <>
+                        <Separator />
+                        <div className="space-y-2">
+                            <FormLabel>AI Suggestions</FormLabel>
+                            <p className="text-xs text-muted-foreground">Click the plus icon to add a subtask.</p>
+                            <div className="space-y-2 max-h-40 overflow-y-auto rounded-md border p-2">
+                                {suggestedSubtasks.map((suggestion, index) => (
+                                    <div key={index} className="flex items-center justify-between gap-2 p-2 bg-muted/50 rounded-md">
+                                        <span className="text-sm flex-1">{suggestion}</span>
+                                        <Button type="button" variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleAddSuggestedSubtask(suggestion)}>
+                                            <PlusCircle className="h-4 w-4" />
+                                        </Button>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </>
+                )}
+                
                 <Separator className="my-4"/>
-                <p className="text-xs text-muted-foreground">The AI will replace any existing subtasks with the newly generated ones.</p>
+                <p className="text-xs text-muted-foreground">The AI will suggest subtasks based on your description. You can then add them to your task.</p>
              </div>
           )}
         </div>
