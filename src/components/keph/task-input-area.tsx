@@ -4,8 +4,7 @@ import { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { TextToTasksForm } from './text-to-tasks-form';
 import { TranscriptToTasksForm } from './transcript-to-tasks-form';
-import { VoiceRecorder } from './voice-recorder';
-import { FileText, ClipboardList, Mic, PlusCircle } from 'lucide-react';
+import { FileText, ClipboardList, PlusCircle } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Separator } from '../ui/separator';
 import { ManualTaskForm } from './manual-task-form';
@@ -39,7 +38,7 @@ export function TaskInputArea({ onTasksCreated, onTaskCreated }: TaskInputAreaPr
       </CardHeader>
       <CardContent>
         <Tabs defaultValue="text">
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="text">
               <FileText className="w-4 h-4 mr-2" />
               Text
@@ -48,19 +47,12 @@ export function TaskInputArea({ onTasksCreated, onTaskCreated }: TaskInputAreaPr
               <ClipboardList className="w-4 h-4 mr-2" />
               Transcript
             </TabsTrigger>
-            <TabsTrigger value="voice">
-              <Mic className="w-4 h-4 mr-2" />
-              Voice
-            </TabsTrigger>
           </TabsList>
           <TabsContent value="text" className="mt-4">
             <TextToTasksForm onTasksCreated={onTasksCreated} />
           </TabsContent>
           <TabsContent value="transcript" className="mt-4">
             <TranscriptToTasksForm onTasksCreated={onTasksCreated} />
-          </TabsContent>
-          <TabsContent value="voice" className="mt-4">
-            <VoiceRecorder onTasksCreated={onTasksCreated} />
           </TabsContent>
         </Tabs>
 
