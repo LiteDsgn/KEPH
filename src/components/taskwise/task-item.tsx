@@ -29,10 +29,17 @@ export function TaskItem({ task, onUpdate, onDelete }: TaskItemProps) {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
   const handleCheck = (checked: boolean) => {
-    onUpdate(task.id, { 
-        status: checked ? 'completed' : 'current',
-        completedAt: checked ? new Date() : undefined
-    });
+    const newStatus = checked ? 'completed' : 'current';
+    const updates: Partial<Omit<Task, 'id' | 'createdAt'>> = {
+      status: newStatus,
+      completedAt: checked ? new Date() : undefined,
+    };
+
+    if (task.subtasks && task.subtasks.length > 0) {
+      updates.subtasks = task.subtasks.map(st => ({ ...st, completed: checked }));
+    }
+
+    onUpdate(task.id, updates);
   };
   
   const handleUpdateStatus = (status: TaskStatus) => {
@@ -48,10 +55,25 @@ export function TaskItem({ task, onUpdate, onDelete }: TaskItemProps) {
   };
 
   const handleSubtaskCheck = (subtaskId: string, checked: boolean) => {
-    const updatedSubtasks = task.subtasks?.map(subtask => 
+    const updatedSubtasks = task.subtasks?.map(subtask =>
       subtask.id === subtaskId ? { ...subtask, completed: checked } : subtask
     );
-    onUpdate(task.id, { subtasks: updatedSubtasks });
+
+    const allSubtasksCompleted = updatedSubtasks?.every(st => st.completed);
+
+    const updates: Partial<Omit<Task, 'id' | 'createdAt'>> = { subtasks: updatedSubtasks };
+
+    if (task.subtasks && task.subtasks.length > 0) {
+      if (allSubtasksCompleted) {
+        updates.status = 'completed';
+        updates.completedAt = new Date();
+      } else {
+        updates.status = 'current';
+        updates.completedAt = undefined;
+      }
+    }
+
+    onUpdate(task.id, updates);
   };
 
   const completedSubtasks = task.subtasks?.filter(s => s.completed).length || 0;
@@ -64,7 +86,7 @@ export function TaskItem({ task, onUpdate, onDelete }: TaskItemProps) {
         onClick={() => setIsEditDialogOpen(true)}
         className={cn(
           'transition-all duration-200 ease-in-out hover:shadow-lg cursor-pointer',
-          'bg-muted/50 hover:bg-muted'
+          'bg-card hover:bg-muted'
         )}
       >
         <CardContent className="p-4 flex items-start gap-4">
