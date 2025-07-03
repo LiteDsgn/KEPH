@@ -37,7 +37,21 @@ export function TaskList({ tasks, onUpdateTask, onDeleteTask, search, setSearch 
   const [summaryData, setSummaryData] = useState<{ tasks: Task[], dateKey: string } | null>(null);
 
 
-  const filteredTasks = tasks.filter((task) => task.status === activeTab);
+  const filteredTasks = tasks.filter((task) => {
+    if (activeTab === 'current') {
+      return (
+        task.status === 'current' ||
+        (task.status === 'completed' && task.completedAt && isToday(task.completedAt))
+      );
+    }
+    if (activeTab === 'completed') {
+      return task.status === 'completed' && task.completedAt && !isToday(task.completedAt);
+    }
+    if (activeTab === 'pending') {
+      return task.status === 'pending';
+    }
+    return false;
+  });
 
   const sortTasks = (tasksToSort: Task[]) => {
     return tasksToSort.sort((a, b) => {
@@ -123,7 +137,21 @@ export function TaskList({ tasks, onUpdateTask, onDeleteTask, search, setSearch 
     );
   };
 
-  const getCount = (status: TaskStatus) => tasks.filter(t => t.status === status).length;
+  const getCount = (status: TaskStatus) => {
+    if (status === 'current') {
+      return tasks.filter(
+        (t) =>
+          t.status === 'current' ||
+          (t.status === 'completed' && t.completedAt && isToday(t.completedAt))
+      ).length;
+    }
+    if (status === 'completed') {
+      return tasks.filter(
+        (t) => t.status === 'completed' && t.completedAt && !isToday(t.completedAt)
+      ).length;
+    }
+    return tasks.filter((t) => t.status === status).length;
+  };
 
   return (
     <>
