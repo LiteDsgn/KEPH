@@ -4,9 +4,29 @@ import { TaskInputArea } from '@/components/taskwise/task-input-area';
 import { TaskList } from '@/components/taskwise/task-list';
 import { useTasks } from '@/hooks/use-tasks';
 import { BrainCircuit } from 'lucide-react';
+import { OverdueTasksDialog } from '@/components/taskwise/overdue-tasks-dialog';
 
 export default function Home() {
-  const { tasks, addTasks, addTask, updateTask, deleteTask, search, setSearch } = useTasks();
+  const {
+    tasks,
+    addTasks,
+    addTask,
+    updateTask,
+    deleteTask,
+    search,
+    setSearch,
+    overdueTasks,
+    updateMultipleTasks,
+    clearOverdueTasks,
+  } = useTasks();
+
+  const handleMoveOverdueToToday = (taskIds: string[]) => {
+    updateMultipleTasks(taskIds, { dueDate: new Date() });
+  };
+
+  const handleMoveOverdueToPending = (taskIds: string[]) => {
+    updateMultipleTasks(taskIds, { status: 'pending' });
+  };
 
   return (
     <div className="min-h-screen bg-background font-body">
@@ -20,7 +40,7 @@ export default function Home() {
         </header>
         <main className="grid grid-cols-1 lg:grid-cols-5 gap-8">
           <div className="lg:col-span-2">
-            <TaskInputArea onTasksCreated={addTasks} onTaskCreated={addTask}/>
+            <TaskInputArea onTasksCreated={addTasks} onTaskCreated={addTask} />
           </div>
           <div className="lg:col-span-3">
             <TaskList
@@ -33,6 +53,12 @@ export default function Home() {
           </div>
         </main>
       </div>
+      <OverdueTasksDialog
+        overdueTasks={overdueTasks}
+        onClose={clearOverdueTasks}
+        onMoveToToday={handleMoveOverdueToToday}
+        onMoveToPending={handleMoveOverdueToPending}
+      />
     </div>
   );
 }

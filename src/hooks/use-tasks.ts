@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useMemo, useEffect } from 'react';
 import type { Task, TaskStatus } from '@/types';
-import { isBefore, startOfToday, subDays, addDays } from 'date-fns';
+import { isBefore, startOfToday, subDays, addDays, isToday } from 'date-fns';
 
 const generateInitialTasks = (): Task[] => {
   const today = new Date();
@@ -66,15 +66,21 @@ const generateInitialTasks = (): Task[] => {
 export function useTasks() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [search, setSearch] = useState('');
+  const [overdueTasks, setOverdueTasks] = useState<Task[]>([]);
 
   useEffect(() => {
-    const tasksWithInitialStatus = generateInitialTasks().map(task => {
-        if (task.status === 'current' && task.dueDate && isBefore(task.dueDate, startOfToday())) {
-          return { ...task, status: 'pending' as TaskStatus };
-        }
-        return task;
-      });
-    setTasks(tasksWithInitialStatus);
+    const initialTasks = generateInitialTasks();
+    const today = startOfToday();
+    
+    const overdue = initialTasks.filter(task => 
+      task.status === 'current' && task.dueDate && isBefore(task.dueDate, today)
+    );
+    
+    if (overdue.length > 0) {
+      setOverdueTasks(overdue);
+    }
+    
+    setTasks(initialTasks);
   }, []);
 
   const addTasks = useCallback((newTasksData: Array<{ title: string; subtasks?: string[] }>) => {
@@ -125,6 +131,28 @@ export function useTasks() {
     );
   }, []);
 
+  const updateMultipleTasks = useCallback((taskIds: string[], updates: Partial<Omit<Task, 'id' | 'createdAt'>>) => {
+    setTasks(prev => 
+      prev.map(task => {
+        if (taskIds.includes(task.id)) {
+          const updatedTask = { ...task, ...updates };
+          if (updates.status === 'completed' && !task.completedAt) {
+            updatedTask.completedAt = new Date();
+          }
+          if (updates.status && updates.status !== 'completed' && task.status === 'completed') {
+            updatedTask.completedAt = undefined;
+          }
+          return updatedTask;
+        }
+        return task;
+      })
+    )
+  }, []);
+
+  const clearOverdueTasks = () => {
+    setOverdueTasks([]);
+  };
+
   const deleteTask = useCallback((taskId: string) => {
     setTasks((prev) => prev.filter((task) => task.id !== taskId));
   }, []);
@@ -151,5 +179,8 @@ export function useTasks() {
     deleteTask,
     search,
     setSearch,
+    overdueTasks,
+    updateMultipleTasks,
+    clearOverdueTasks,
   };
 }
