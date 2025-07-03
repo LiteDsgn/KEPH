@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -16,7 +16,7 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, PlusCircle, X, CalendarIcon, Sparkles } from 'lucide-react';
+import { Loader2, PlusCircle, X, CalendarIcon, Sparkles, GripVertical } from 'lucide-react';
 import type { Task } from '@/types';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import { cn } from '@/lib/utils';
@@ -62,7 +62,7 @@ export function ManualTaskForm({ onTaskCreated, onCancel }: ManualTaskFormProps)
     },
   });
 
-  const { fields: subtaskFields, append: appendSubtask, remove: removeSubtask, replace: replaceSubtasks } = useFieldArray({
+  const { fields: subtaskFields, append: appendSubtask, remove: removeSubtask, replace: replaceSubtasks, move: moveSubtask } = useFieldArray({
     control: form.control,
     name: 'subtasks',
   });
@@ -71,6 +71,25 @@ export function ManualTaskForm({ onTaskCreated, onCancel }: ManualTaskFormProps)
     control: form.control,
     name: 'urls',
   });
+
+  const subtaskDragItem = useRef<number | null>(null);
+  const subtaskDragOverItem = useRef<number | null>(null);
+
+  const handleSubtaskDragStart = (index: number) => {
+    subtaskDragItem.current = index;
+  };
+
+  const handleSubtaskDragEnter = (index: number) => {
+    subtaskDragOverItem.current = index;
+  };
+
+  const handleSubtaskDrop = () => {
+    if (subtaskDragItem.current !== null && subtaskDragOverItem.current !== null) {
+      moveSubtask(subtaskDragItem.current, subtaskDragOverItem.current);
+    }
+    subtaskDragItem.current = null;
+    subtaskDragOverItem.current = null;
+  };
 
   async function onSubmit(values: FormValues) {
     setIsSubmitting(true);
@@ -221,9 +240,18 @@ export function ManualTaskForm({ onTaskCreated, onCancel }: ManualTaskFormProps)
 
                     <FormItem>
                         <FormLabel>Subtasks (Optional)</FormLabel>
-                        <div className="space-y-2 max-h-48 overflow-y-auto pr-2">
+                        <div className="space-y-2 max-h-48 overflow-y-auto p-2">
                             {subtaskFields.map((field, index) => (
-                                <div key={field.id} className="flex items-center gap-2">
+                                <div 
+                                    key={field.id}
+                                    className="flex items-center gap-2 group"
+                                    draggable
+                                    onDragStart={() => handleSubtaskDragStart(index)}
+                                    onDragEnter={() => handleSubtaskDragEnter(index)}
+                                    onDragEnd={handleSubtaskDrop}
+                                    onDragOver={(e) => e.preventDefault()}
+                                >
+                                    <GripVertical className="h-5 w-5 text-muted-foreground cursor-grab" />
                                     <FormField
                                         control={form.control}
                                         name={`subtasks.${index}.title`}
