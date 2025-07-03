@@ -201,6 +201,7 @@ export function TaskList({ tasks, onUpdateTask, onDeleteTask, search, setSearch 
             onClose={() => setSummaryData(null)}
             tasks={summaryData?.tasks || []}
             formattedDate={summaryData ? formatDateHeading(summaryData.dateKey) : ''}
+            dateKey={summaryData?.dateKey}
         />
     </>
   );

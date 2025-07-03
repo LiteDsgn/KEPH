@@ -12,15 +12,17 @@ import { CheckCircle2, Circle, NotebookText, Link as LinkIcon, Copy, Download, L
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { Button } from '../ui/button';
+import { format } from 'date-fns';
 
 interface DailySummaryDialogProps {
   isOpen: boolean;
   onClose: () => void;
   tasks: Task[];
   formattedDate: string;
+  dateKey?: string;
 }
 
-export function DailySummaryDialog({ isOpen, onClose, tasks, formattedDate }: DailySummaryDialogProps) {
+export function DailySummaryDialog({ isOpen, onClose, tasks, formattedDate, dateKey }: DailySummaryDialogProps) {
   const reportContentRef = useRef<HTMLDivElement>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const { toast } = useToast();
@@ -63,8 +65,19 @@ export function DailySummaryDialog({ isOpen, onClose, tasks, formattedDate }: Da
   });
   const completionRate = itemsForCompletion > 0 ? (completedItemsForCompletion / itemsForCompletion) * 100 : 0;
 
+  const getReportTitle = () => {
+    if (formattedDate === 'Today' && dateKey) {
+      const [year, month, day] = dateKey.split('-').map(Number);
+      const date = new Date(year, month - 1, day);
+      return `End of Day Report: Today - ${format(date, 'MMMM d, yyyy')}`;
+    }
+    return `End of Day Report: ${formattedDate}`;
+  };
+
+  const reportTitle = getReportTitle();
+
   const generateHtmlReport = () => {
-    let html = `<h1>End of Day Report: ${formattedDate}</h1>`;
+    let html = `<h1>${reportTitle}</h1>`;
 
     html += `<h2>Daily Statistics</h2>`;
     html += `<ul><li><strong>Overall Progress</strong>: ${completionRate.toFixed(0)}%</li>`;
@@ -100,11 +113,11 @@ export function DailySummaryDialog({ isOpen, onClose, tasks, formattedDate }: Da
         html += '<p>No tasks recorded for this day.</p>';
     }
     
-    return `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>TaskWise Report ${formattedDate}</title></head><body>${html}</body></html>`;
+    return `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Powered by TaskWise AI</title></head><body>${html}</body></html>`;
   };
 
   const generatePlainTextReport = () => {
-    let text = `End of Day Report: ${formattedDate}\n\n`;
+    let text = `${reportTitle}\n\n`;
 
     text += `== Daily Statistics ==\n`;
     text += `- Overall Progress: ${completionRate.toFixed(0)}%\n`;
@@ -187,6 +200,10 @@ export function DailySummaryDialog({ isOpen, onClose, tasks, formattedDate }: Da
         format: 'a4',
       });
 
+      pdf.setProperties({
+        title: 'Powered by TaskWise AI'
+      });
+
       const imgProps = pdf.getImageProperties(imgData);
       const pdfWidth = pdf.internal.pageSize.getWidth();
       const pageHeight = pdf.internal.pageSize.getHeight();
@@ -205,7 +222,7 @@ export function DailySummaryDialog({ isOpen, onClose, tasks, formattedDate }: Da
         heightLeft -= pageHeight;
       }
       
-      pdf.save(`TaskWise-Report-${formattedDate.replace(/[\s,]+/g, '-')}.pdf`);
+      pdf.save(`TaskWise-Report-${dateKey || formattedDate.replace(/[\s,]+/g, '-')}.pdf`);
     }).catch(err => {
       console.error("Error generating PDF:", err);
       toast({
@@ -263,7 +280,7 @@ export function DailySummaryDialog({ isOpen, onClose, tasks, formattedDate }: Da
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-3xl flex flex-col max-h-[90vh]">
         <DialogHeader>
-          <DialogTitle className="text-2xl">End of Day Report: {formattedDate}</DialogTitle>
+          <DialogTitle className="text-2xl">{reportTitle}</DialogTitle>
           <DialogDescription>
             A summary of your activities and progress for the day.
           </DialogDescription>
