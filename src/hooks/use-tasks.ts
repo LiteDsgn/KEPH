@@ -117,6 +117,7 @@ export function useTasks() {
       ...taskData,
       status: 'current',
       createdAt: new Date(),
+      dueDate: taskData.dueDate || new Date(),
     };
     setTasks((prev) => [newTask, ...prev]);
   }, []);

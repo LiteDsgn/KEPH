@@ -63,52 +63,101 @@ export function DailySummaryDialog({ isOpen, onClose, tasks, formattedDate }: Da
   });
   const completionRate = itemsForCompletion > 0 ? (completedItemsForCompletion / itemsForCompletion) * 100 : 0;
 
-  const generateMarkdown = () => {
-    let md = `# End of Day Report: ${formattedDate}\n\n`;
+  const generateHtmlReport = () => {
+    let html = `<h1>End of Day Report: ${formattedDate}</h1>`;
 
-    md += `## Daily Statistics\n`;
-    md += `- **Overall Progress**: ${completionRate.toFixed(0)}%\n`;
-    md += `- **Tasks Completed**: ${completedTasksCount} / ${totalTasks}\n`;
-    md += `- **Subtasks Checked**: ${completedSubtasks} / ${totalSubtasks}\n\n`;
-    md += '---\n\n';
+    html += `<h2>Daily Statistics</h2>`;
+    html += `<ul><li><strong>Overall Progress</strong>: ${completionRate.toFixed(0)}%</li>`;
+    html += `<li><strong>Tasks Completed</strong>: ${completedTasksCount} / ${totalTasks}</li>`;
+    html += `<li><strong>Subtasks Checked</strong>: ${completedSubtasks} / ${totalSubtasks}</li></ul>`;
+    html += '<hr>';
 
-    const renderTaskToMarkdown = (task: Task) => {
-        let taskMd = `### ${task.status === 'completed' ? '✅' : '🔲'} ${task.title}\n\n`;
+    const renderTaskToHtml = (task: Task) => {
+        let taskHtml = `<h3>${task.status === 'completed' ? '✅' : '⬜️'} ${task.title}</h3>`;
         if (task.subtasks && task.subtasks.length > 0) {
-            taskMd += task.subtasks.map(st => `- [${st.completed ? 'x' : ' '}] ${st.title}`).join('\n') + '\n\n';
+            taskHtml += `<ul>${task.subtasks.map(st => `<li>${st.completed ? '☑️' : '☐'} ${st.title}</li>`).join('')}</ul>`;
         }
         if (task.notes) {
-            taskMd += `**Notes:**\n${task.notes}\n\n`;
+            taskHtml += `<p><strong>Notes:</strong><br/>${task.notes.replace(/\n/g, '<br/>')}</p>`;
         }
         if (task.urls && task.urls.length > 0) {
-            taskMd += `**URLs:**\n` + task.urls.map(url => `- ${url.value}`).join('\n') + '\n\n';
+            taskHtml += `<p><strong>URLs:</strong></p><ul>${task.urls.map(url => `<li><a href="${url.value}">${url.value}</a></li>`).join('')}</ul>`;
         }
-        return taskMd;
+        return taskHtml;
     }
 
     if (completedTasksList.length > 0) {
-        md += '## Accomplishments\n\n';
-        md += completedTasksList.map(renderTaskToMarkdown).join('---\n');
+        html += '<h2>Accomplishments</h2>';
+        html += completedTasksList.map(renderTaskToHtml).join('<hr>');
     }
 
     if (incompleteTasksList.length > 0) {
-        md += '\n## Outstanding Items\n\n';
-        md += incompleteTasksList.map(renderTaskToMarkdown).join('---\n');
+        html += '<h2>Outstanding Items</h2>';
+        html += incompleteTasksList.map(renderTaskToHtml).join('<hr>');
     }
 
     if (tasks.length === 0) {
-        md += 'No tasks recorded for this day.\n';
+        html += '<p>No tasks recorded for this day.</p>';
     }
-
-    return md;
+    
+    return `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>TaskWise Report ${formattedDate}</title></head><body>${html}</body></html>`;
   };
 
-  const handleCopyMarkdown = () => {
-    const markdown = generateMarkdown();
-    navigator.clipboard.writeText(markdown).then(() => {
+  const generatePlainTextReport = () => {
+    let text = `End of Day Report: ${formattedDate}\n\n`;
+
+    text += `== Daily Statistics ==\n`;
+    text += `- Overall Progress: ${completionRate.toFixed(0)}%\n`;
+    text += `- Tasks Completed: ${completedTasksCount} / ${totalTasks}\n`;
+    text += `- Subtasks Checked: ${completedSubtasks} / ${totalSubtasks}\n\n`;
+    text += '-----------------\n\n';
+
+    const renderTaskToText = (task: Task) => {
+        let taskText = `${task.status === 'completed' ? '✅' : '🔲'} ${task.title}\n\n`;
+        if (task.subtasks && task.subtasks.length > 0) {
+            taskText += task.subtasks.map(st => `  - [${st.completed ? 'x' : ' '}] ${st.title}`).join('\n') + '\n\n';
+        }
+        if (task.notes) {
+            taskText += `Notes:\n${task.notes}\n\n`;
+        }
+        if (task.urls && task.urls.length > 0) {
+            taskText += `URLs:\n` + task.urls.map(url => `- ${url.value}`).join('\n') + '\n\n';
+        }
+        return taskText;
+    }
+
+    if (completedTasksList.length > 0) {
+        text += '== Accomplishments ==\n\n';
+        text += completedTasksList.map(renderTaskToText).join('---\n');
+    }
+
+    if (incompleteTasksList.length > 0) {
+        text += '\n== Outstanding Items ==\n\n';
+        text += incompleteTasksList.map(renderTaskToText).join('---\n');
+    }
+
+    if (tasks.length === 0) {
+        text += 'No tasks recorded for this day.\n';
+    }
+
+    return text;
+  };
+
+  const handleCopyToClipboard = () => {
+    const html = generateHtmlReport();
+    const text = generatePlainTextReport();
+    const htmlBlob = new Blob([html], { type: 'text/html' });
+    const textBlob = new Blob([text], { type: 'text/plain' });
+
+    navigator.clipboard.write([
+        new ClipboardItem({
+            'text/html': htmlBlob,
+            'text/plain': textBlob,
+        })
+    ]).then(() => {
         toast({
             title: "Copied to clipboard!",
-            description: "The report has been copied in Markdown format."
+            description: "The report can be pasted into editors like Google Docs."
         });
     }, (err) => {
         toast({
@@ -270,9 +319,9 @@ export function DailySummaryDialog({ isOpen, onClose, tasks, formattedDate }: Da
             </div>
         </div>
         <DialogFooter className="pt-4 border-t mt-4">
-            <Button variant="outline" onClick={handleCopyMarkdown} disabled={isProcessing}>
+            <Button variant="outline" onClick={handleCopyToClipboard} disabled={isProcessing}>
                 <Copy className="mr-2 h-4 w-4" />
-                Copy as Markdown
+                Copy for Docs
             </Button>
             <Button onClick={handleDownloadPdf} disabled={isProcessing}>
                 {isProcessing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />}
