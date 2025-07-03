@@ -131,7 +131,7 @@ export function TaskItem({ task, onUpdate, onDelete }: TaskItemProps) {
                       href={url.value} 
                       target="_blank" 
                       rel="noopener noreferrer" 
-                      className="text-sm text-blue-500 hover:underline flex items-center gap-2"
+                      className="text-sm text-link hover:underline flex items-center gap-2"
                       onClick={(e) => e.stopPropagation()}
                   >
                       <LinkIcon className="w-4 h-4 shrink-0" />

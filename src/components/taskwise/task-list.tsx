@@ -99,7 +99,7 @@ export function TaskList({ tasks, onUpdateTask, onDeleteTask, search, setSearch 
                         {dateKey !== 'No Date' && (
                             <Button
                                 variant="link"
-                                className="text-xs h-auto p-0 text-primary"
+                                className="text-xs h-auto p-0"
                                 onClick={() => setSummaryData({ dateKey, tasks: groupTasks })}
                             >
                                 Generate Summary

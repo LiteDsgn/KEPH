@@ -38,6 +38,7 @@
     --sidebar-ring: 0 0% 70.6%;
     --radius: 0.625rem;
     --tracking-normal: 0.5px;
+    --link-color: 217 91% 50%;
   }
  
   .dark {
@@ -75,6 +76,7 @@
     --sidebar-ring: 0 0% 80.8%;
     --radius: 0.625rem;
     --tracking-normal: 0.5px;
+    --link-color: 217 91% 60%;
   }
 }
 

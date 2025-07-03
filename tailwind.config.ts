@@ -10,8 +10,8 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        body: ['Architects Daughter', 'sans-serif'],
-        headline: ['Architects Daughter', 'sans-serif'],
+        body: ['Figtree', 'sans-serif'],
+        headline: ['Figtree', 'sans-serif'],
         serif: ['Georgia', 'serif'],
         mono: ['Fira Code', 'monospace'],
         code: ['Fira Code', 'monospace'],
@@ -63,6 +63,7 @@ export default {
         border: 'hsl(var(--border))',
         input: 'hsl(var(--input))',
         ring: 'hsl(var(--ring))',
+        link: 'hsl(var(--link-color))',
         chart: {
           '1': 'hsl(var(--chart-1))',
           '2': 'hsl(var(--chart-2))',
