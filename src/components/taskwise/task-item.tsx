@@ -64,7 +64,7 @@ export function TaskItem({ task, onUpdate, onDelete }: TaskItemProps) {
         onClick={() => setIsEditDialogOpen(true)}
         className={cn(
           'transition-all duration-200 ease-in-out hover:shadow-lg cursor-pointer',
-          task.status === 'completed' && 'bg-muted/50 hover:bg-muted'
+          'bg-muted/50 hover:bg-muted'
         )}
       >
         <CardContent className="p-4 flex items-start gap-4">
