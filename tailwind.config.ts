@@ -10,9 +10,24 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        body: ['Inter', 'sans-serif'],
-        headline: ['Inter', 'sans-serif'],
-        code: ['monospace'],
+        body: ['Architects Daughter', 'sans-serif'],
+        headline: ['Architects Daughter', 'sans-serif'],
+        serif: ['Georgia', 'serif'],
+        mono: ['Fira Code', 'monospace'],
+        code: ['Fira Code', 'monospace'],
+      },
+      boxShadow: {
+        '2xs': '1px 4px 5px 0px hsl(0 0% 0% / 0.01)',
+        'xs': '1px 4px 5px 0px hsl(0 0% 0% / 0.01)',
+        'sm': '1px 4px 5px 0px hsl(0 0% 0% / 0.03), 1px 1px 2px -1px hsl(0 0% 0% / 0.03)',
+        'DEFAULT': '1px 4px 5px 0px hsl(0 0% 0% / 0.03), 1px 1px 2px -1px hsl(0 0% 0% / 0.03)',
+        'md': '1px 4px 5px 0px hsl(0 0% 0% / 0.03), 1px 2px 4px -1px hsl(0 0% 0% / 0.03)',
+        'lg': '1px 4px 5px 0px hsl(0 0% 0% / 0.03), 1px 4px 6px -1px hsl(0 0% 0% / 0.03)',
+        'xl': '1px 4px 5px 0px hsl(0 0% 0% / 0.03), 1px 8px 10px -1px hsl(0 0% 0% / 0.03)',
+        '2xl': '1px 4px 5px 0px hsl(0 0% 0% / 0.07)',
+      },
+      letterSpacing: {
+        normal: '0.5px',
       },
       colors: {
         background: 'hsl(var(--background))',
