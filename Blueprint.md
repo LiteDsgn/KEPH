@@ -1,4 +1,4 @@
-# App Name: TaskWise AI
+# App Name: KEPH
 
 ## Core Features:
 

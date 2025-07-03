@@ -3,7 +3,7 @@ import './globals.css';
 import { Toaster } from "@/components/ui/toaster"
 
 export const metadata: Metadata = {
-  title: 'TaskWise AI',
+  title: 'KEPH',
   description: 'An intelligent productivity app that uses AI to help you create and manage your to-do lists from text, transcripts, and voice.',
 };
 

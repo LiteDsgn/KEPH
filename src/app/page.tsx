@@ -1,14 +1,14 @@
 'use client';
 
-import { TaskInputArea } from '@/components/taskwise/task-input-area';
-import { TaskList } from '@/components/taskwise/task-list';
+import { TaskInputArea } from '@/components/keph/task-input-area';
+import { TaskList } from '@/components/keph/task-list';
 import { useTasks } from '@/hooks/use-tasks';
 import { BrainCircuit, Bell } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import type { Notification, Task } from '@/types';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
-import { NotificationPanel } from '@/components/taskwise/notification-panel';
+import { NotificationPanel } from '@/components/keph/notification-panel';
 
 export default function Home() {
   const {
@@ -122,8 +122,8 @@ export default function Home() {
             <div className="flex items-center gap-3">
               <BrainCircuit className="w-10 h-10 text-primary" />
               <div>
-                <h1 className="text-3xl font-bold font-headline text-primary">TaskWise AI</h1>
-                <p className="text-muted-foreground">Your intelligent to-do list assistant.</p>
+                <h1 className="text-3xl font-bold font-headline text-primary">KEPH</h1>
+                <p className="text-muted-foreground">Your intelligent assistant.</p>
               </div>
             </div>
             <SheetTrigger asChild>
