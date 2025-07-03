@@ -68,7 +68,7 @@ export function NotificationPanel({
                         {formatDistanceToNow(notification.createdAt, { addSuffix: true })}
                      </p>
                    </div>
-                   <Button variant="ghost" size="icon" className="h-6 w-6 -mt-1 -mr-2" onClick={() => onDismissNotification(notification.id)}>
+                   <Button variant="ghost" size="icon" className="h-8 w-8 -m-2" onClick={() => onDismissNotification(notification.id)}>
                        <X className="h-4 w-4" />
                        <span className="sr-only">Dismiss</span>
                    </Button>
@@ -172,7 +172,7 @@ export function NotificationPanel({
                             {formatDistanceToNow(notification.createdAt, { addSuffix: true })}
                         </p>
                       </div>
-                      <Button variant="ghost" size="icon" className="h-6 w-6 -mt-1 -mr-2" onClick={() => onDismissNotification(notification.id)}>
+                      <Button variant="ghost" size="icon" className="h-8 w-8 -m-2" onClick={() => onDismissNotification(notification.id)}>
                           <X className="h-4 w-4" />
                           <span className="sr-only">Dismiss</span>
                       </Button>
