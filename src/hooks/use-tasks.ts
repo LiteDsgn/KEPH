@@ -69,18 +69,26 @@ export function useTasks() {
   const [overdueTasks, setOverdueTasks] = useState<Task[]>([]);
 
   useEffect(() => {
-    const initialTasks = generateInitialTasks();
+    const initial = generateInitialTasks();
     const today = startOfToday();
     
-    const overdue = initialTasks.filter(task => 
+    const overdue = initial.filter(task => 
       task.status === 'current' && task.dueDate && isBefore(task.dueDate, today)
     );
+    
+    const updatedInitialTasks = initial.map(task => {
+        const isOverdue = overdue.some(ot => ot.id === task.id);
+        if (isOverdue) {
+            return { ...task, status: 'pending' as TaskStatus };
+        }
+        return task;
+    });
     
     if (overdue.length > 0) {
       setOverdueTasks(overdue);
     }
     
-    setTasks(initialTasks);
+    setTasks(updatedInitialTasks);
   }, []);
 
   const addTasks = useCallback((newTasksData: Array<{ title: string; subtasks?: string[] }>) => {

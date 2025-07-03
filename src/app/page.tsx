@@ -5,7 +5,7 @@ import { TaskList } from '@/components/taskwise/task-list';
 import { useTasks } from '@/hooks/use-tasks';
 import { BrainCircuit, Bell } from 'lucide-react';
 import { useState, useEffect } from 'react';
-import type { Notification } from '@/types';
+import type { Notification, Task } from '@/types';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { NotificationPanel } from '@/components/taskwise/notification-panel';
@@ -43,7 +43,17 @@ export default function Home() {
 
             if (overdueNotification) {
                 // Update existing
-                return prevNotifications.map(n => n.id === 'overdue-tasks' ? newNotificationData : n);
+                const existingTaskIds = new Set(overdueNotification.data.map((t: Task) => t.id));
+                const newTasksToAdd = overdueTasks.filter(t => !existingTaskIds.has(t.id));
+                if (newTasksToAdd.length > 0) {
+                    const combinedData = [...overdueNotification.data, ...newTasksToAdd];
+                    return prevNotifications.map(n => n.id === 'overdue-tasks' ? {
+                        ...newNotificationData,
+                        data: combinedData,
+                        title: `You have ${combinedData.length} overdue task${combinedData.length > 1 ? 's' : ''}`,
+                     } : n);
+                }
+                return prevNotifications;
             } else {
                 // Add new
                 return [newNotificationData, ...prevNotifications];
@@ -59,24 +69,50 @@ export default function Home() {
   }, [overdueTasks]);
 
 
+  const updateNotificationsAfterAction = (actedTaskIds: string[]) => {
+      setNotifications(prev => {
+        const updated = prev.map(n => {
+            if (n.id === 'overdue-tasks') {
+                const remainingData = n.data.filter((t: Task) => !actedTaskIds.includes(t.id));
+                if (remainingData.length > 0) {
+                    return { 
+                        ...n, 
+                        data: remainingData, 
+                        title: `You have ${remainingData.length} overdue task${remainingData.length > 1 ? 's' : ''}` 
+                    };
+                }
+                return null;
+            }
+            return n;
+        }).filter(Boolean);
+
+        if (!updated.some(n => n?.id === 'overdue-tasks')) {
+            clearOverdueTasks();
+        }
+
+        return updated as Notification[];
+      });
+  };
+
   const handleMoveOverdueToToday = (taskIds: string[]) => {
-    updateMultipleTasks(taskIds, { dueDate: new Date() });
-    clearOverdueTasks();
+    updateMultipleTasks(taskIds, { dueDate: new Date(), status: 'current' });
+    updateNotificationsAfterAction(taskIds);
   };
 
-  const handleMoveOverdueToPending = (taskIds: string[]) => {
-    updateMultipleTasks(taskIds, { status: 'pending' });
-    clearOverdueTasks();
+  const handleKeepInPending = (taskIds: string[]) => {
+    // Tasks are already pending, so we just remove them from the notification
+    updateNotificationsAfterAction(taskIds);
   };
-
+  
   const dismissNotification = (notificationId: string) => {
-    if (notificationId === 'overdue-tasks') {
-        // This will trigger the useEffect to remove the notification
+    const notificationToDismiss = notifications.find(n => n.id === notificationId);
+    if (notificationToDismiss && notificationToDismiss.type === 'overdue-tasks') {
         clearOverdueTasks();
     } else {
        setNotifications(prev => prev.filter(n => n.id !== notificationId));
     }
   };
+
 
   return (
     <Sheet>
@@ -124,7 +160,7 @@ export default function Home() {
                 <NotificationPanel
                     notifications={notifications}
                     onDismissNotification={dismissNotification}
-                    onMoveOverdueToPending={handleMoveOverdueToPending}
+                    onKeepInPending={handleKeepInPending}
                     onMoveOverdueToToday={handleMoveOverdueToToday}
                 />
             </div>
