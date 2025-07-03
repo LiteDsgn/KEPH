@@ -313,7 +313,7 @@ export function ManualTaskForm({ onTaskCreated, onCancel }: ManualTaskFormProps)
                     
                     <FormItem>
                         <FormLabel>URLs (Optional)</FormLabel>
-                        <div className="space-y-2">
+                        <div className="space-y-2 max-h-48 overflow-y-auto p-2">
                             {urlFields.map((field, index) => (
                                 <div key={field.id} className="flex items-center gap-2">
                                     <FormField
