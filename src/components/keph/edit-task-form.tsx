@@ -189,7 +189,7 @@ export function EditTaskForm({ task, onSubmit, onCancel }: EditTaskFormProps) {
             
             <FormItem>
                 <FormLabel>Subtasks</FormLabel>
-                <div className="space-y-2">
+                <div className="space-y-2 max-h-48 overflow-y-auto pr-2">
                     {subtaskFields.map((field, index) => (
                         <div key={field.id} className="flex items-center gap-2">
                             <FormField
