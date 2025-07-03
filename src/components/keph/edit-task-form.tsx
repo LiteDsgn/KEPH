@@ -359,9 +359,6 @@ export function EditTaskForm({ task, onSubmit, onCancel }: EditTaskFormProps) {
                         </div>
                     </>
                 )}
-                
-                <Separator className="my-4"/>
-                <p className="text-xs text-muted-foreground">The AI will suggest subtasks based on your description. You can then add them to your task.</p>
              </div>
           )}
         </div>

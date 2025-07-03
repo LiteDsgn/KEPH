@@ -36,11 +36,11 @@ const prompt = ai.definePrompt({
   output: {schema: GenerateSubtasksOutputSchema},
   prompt: `You are an assistant skilled at breaking down large tasks into smaller, actionable subtasks.
 
-  Based on the following task title and description, generate a list of subtasks. Each subtask should be a clear, concise action item.
+  Your goal is to generate a list of subtasks based on the main task's title and a more detailed description. You MUST consider both the title and the description to create a comprehensive and relevant list of subtasks. Each subtask should be a clear, concise action item.
 
   Task Title: {{taskTitle}}
 
-  Description:
+  Detailed Description:
   {{description}}
   `,
 });
