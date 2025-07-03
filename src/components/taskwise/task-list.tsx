@@ -5,9 +5,11 @@ import type { Task, TaskStatus } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 import { TaskItem } from './task-item';
 import { Search, Circle, CheckCircle2, Archive } from 'lucide-react';
 import { isToday, isYesterday, format } from 'date-fns';
+import { DailySummaryDialog } from './daily-summary-dialog';
 
 interface TaskListProps {
   tasks: Task[];
@@ -32,6 +34,8 @@ const formatDateHeading = (dateKey: string): string => {
 
 export function TaskList({ tasks, onUpdateTask, onDeleteTask, search, setSearch }: TaskListProps) {
   const [activeTab, setActiveTab] = useState<TaskStatus>('current');
+  const [summaryData, setSummaryData] = useState<{ tasks: Task[], dateKey: string } | null>(null);
+
 
   const filteredTasks = tasks.filter((task) => task.status === activeTab);
 
@@ -88,9 +92,20 @@ export function TaskList({ tasks, onUpdateTask, onDeleteTask, search, setSearch 
             
             return (
                 <div key={dateKey}>
-                    <h3 className="text-md font-semibold mb-3 text-muted-foreground px-1">
-                       {formatDateHeading(dateKey)}
-                    </h3>
+                    <div className="flex justify-between items-center mb-3">
+                        <h3 className="text-md font-semibold text-muted-foreground px-1">
+                           {formatDateHeading(dateKey)}
+                        </h3>
+                        {dateKey !== 'No Date' && (
+                            <Button
+                                variant="link"
+                                className="text-xs h-auto p-0 text-primary"
+                                onClick={() => setSummaryData({ dateKey, tasks: groupTasks })}
+                            >
+                                Generate Summary
+                            </Button>
+                        )}
+                    </div>
                     <div className="space-y-4">
                         {sortedGroupTasks.map(task => (
                             <TaskItem
@@ -111,46 +126,54 @@ export function TaskList({ tasks, onUpdateTask, onDeleteTask, search, setSearch 
   const getCount = (status: TaskStatus) => tasks.filter(t => t.status === status).length;
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Your Tasks</CardTitle>
-        <div className="relative mt-2">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Search tasks..."
-            className="pl-10"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
-        </div>
-      </CardHeader>
-      <CardContent>
-        <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as TaskStatus)}>
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="current">
-              <Circle className="w-4 h-4 mr-2"/>
-              Current ({getCount('current')})
-            </TabsTrigger>
-            <TabsTrigger value="completed">
-              <CheckCircle2 className="w-4 h-4 mr-2"/>
-              Completed ({getCount('completed')})
-            </TabsTrigger>
-            <TabsTrigger value="pending">
-              <Archive className="w-4 h-4 mr-2"/>
-              Pending ({getCount('pending')})
-            </TabsTrigger>
-          </TabsList>
-          <TabsContent value="current" className="mt-4">
-            {renderTaskList(filteredTasks)}
-          </TabsContent>
-          <TabsContent value="completed" className="mt-4">
-            {renderTaskList(filteredTasks)}
-          </TabsContent>
-          <TabsContent value="pending" className="mt-4">
-            {renderTaskList(filteredTasks)}
-          </TabsContent>
-        </Tabs>
-      </CardContent>
-    </Card>
+    <>
+        <Card>
+            <CardHeader>
+                <CardTitle>Your Tasks</CardTitle>
+                <div className="relative mt-2">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                    placeholder="Search tasks..."
+                    className="pl-10"
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                />
+                </div>
+            </CardHeader>
+            <CardContent>
+                <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as TaskStatus)}>
+                <TabsList className="grid w-full grid-cols-3">
+                    <TabsTrigger value="current">
+                    <Circle className="w-4 h-4 mr-2"/>
+                    Current ({getCount('current')})
+                    </TabsTrigger>
+                    <TabsTrigger value="completed">
+                    <CheckCircle2 className="w-4 h-4 mr-2"/>
+                    Completed ({getCount('completed')})
+                    </TabsTrigger>
+                    <TabsTrigger value="pending">
+                    <Archive className="w-4 h-4 mr-2"/>
+                    Pending ({getCount('pending')})
+                    </TabsTrigger>
+                </TabsList>
+                <TabsContent value="current" className="mt-4">
+                    {renderTaskList(filteredTasks)}
+                </TabsContent>
+                <TabsContent value="completed" className="mt-4">
+                    {renderTaskList(filteredTasks)}
+                </TabsContent>
+                <TabsContent value="pending" className="mt-4">
+                    {renderTaskList(filteredTasks)}
+                </TabsContent>
+                </Tabs>
+            </CardContent>
+        </Card>
+        <DailySummaryDialog
+            isOpen={!!summaryData}
+            onClose={() => setSummaryData(null)}
+            tasks={summaryData?.tasks || []}
+            formattedDate={summaryData ? formatDateHeading(summaryData.dateKey) : ''}
+        />
+    </>
   );
 }
