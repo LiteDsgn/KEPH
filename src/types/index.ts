@@ -22,3 +22,15 @@ export interface Task {
   dueDate?: Date;
   completedAt?: Date;
 }
+
+export type NotificationType = 'overdue-tasks';
+
+export interface Notification {
+  id: string;
+  type: NotificationType;
+  title: string;
+  description: string;
+  createdAt: Date;
+  read: boolean;
+  data: any;
+}

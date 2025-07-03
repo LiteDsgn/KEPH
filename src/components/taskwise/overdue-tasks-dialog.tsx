@@ -31,6 +31,12 @@ export function OverdueTasksDialog({ overdueTasks, onMoveToToday, onMoveToPendin
     onClose();
   };
   
+  // This component is no longer used directly, but kept for potential future use.
+  // The logic has been moved to the NotificationPanel.
+  if (overdueTasks.length === 0) {
+    return null;
+  }
+  
   return (
     <AlertDialog open={overdueTasks.length > 0} onOpenChange={(isOpen) => !isOpen && onClose()}>
       <AlertDialogContent>
