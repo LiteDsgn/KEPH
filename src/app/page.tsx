@@ -17,6 +17,7 @@ export default function Home() {
     addTask,
     updateTask,
     deleteTask,
+    duplicateTask,
     search,
     setSearch,
     overdueTasks,
@@ -146,6 +147,7 @@ export default function Home() {
                 tasks={tasks}
                 onUpdateTask={updateTask}
                 onDeleteTask={deleteTask}
+                onDuplicateTask={duplicateTask}
                 search={search}
                 setSearch={setSearch}
               />

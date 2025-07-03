@@ -165,6 +165,38 @@ export function useTasks() {
   const deleteTask = useCallback((taskId: string) => {
     setTasks((prev) => prev.filter((task) => task.id !== taskId));
   }, []);
+
+  const duplicateTask = useCallback((taskId: string) => {
+    setTasks(prev => {
+      const taskToDuplicate = prev.find(t => t.id === taskId);
+      if (!taskToDuplicate) return prev;
+
+      const newTask: Task = {
+        id: crypto.randomUUID(),
+        title: `${taskToDuplicate.title} (Copy)`,
+        status: 'current',
+        createdAt: new Date(),
+        dueDate: new Date(),
+        completedAt: undefined,
+        notes: taskToDuplicate.notes,
+        subtasks: taskToDuplicate.subtasks?.map(st => ({
+          ...st,
+          id: crypto.randomUUID(),
+          completed: false,
+        })),
+        urls: taskToDuplicate.urls?.map(url => ({
+          ...url,
+          id: crypto.randomUUID(),
+        })),
+      };
+
+      const originalTaskIndex = prev.findIndex(t => t.id === taskId);
+      const newTasks = [...prev];
+      newTasks.splice(originalTaskIndex + 1, 0, newTask);
+      
+      return newTasks;
+    });
+  }, []);
   
   const searchedTasks = useMemo(() => {
     if (!search) {
@@ -186,6 +218,7 @@ export function useTasks() {
     addTask,
     updateTask,
     deleteTask,
+    duplicateTask,
     search,
     setSearch,
     overdueTasks,

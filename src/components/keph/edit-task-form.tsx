@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -16,7 +16,7 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import type { Task } from '@/types';
-import { Loader2, X, Sparkles, CalendarIcon } from 'lucide-react';
+import { Loader2, X, Sparkles, CalendarIcon, GripVertical } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { generateSubtasks } from '@/ai/flows/generate-subtasks';
 import { useToast } from '@/hooks/use-toast';
@@ -65,7 +65,7 @@ export function EditTaskForm({ task, onSubmit, onCancel }: EditTaskFormProps) {
     },
   });
 
-  const { fields: subtaskFields, append: appendSubtask, remove: removeSubtask, replace: replaceSubtasks } = useFieldArray({
+  const { fields: subtaskFields, append: appendSubtask, remove: removeSubtask, replace: replaceSubtasks, move: moveSubtask } = useFieldArray({
     control: form.control,
     name: 'subtasks',
   });
@@ -74,6 +74,26 @@ export function EditTaskForm({ task, onSubmit, onCancel }: EditTaskFormProps) {
     control: form.control,
     name: 'urls',
   });
+  
+  const subtaskDragItem = useRef<number | null>(null);
+  const subtaskDragOverItem = useRef<number | null>(null);
+
+  const handleSubtaskDragStart = (index: number) => {
+    subtaskDragItem.current = index;
+  };
+
+  const handleSubtaskDragEnter = (index: number) => {
+    subtaskDragOverItem.current = index;
+  };
+
+  const handleSubtaskDrop = () => {
+    if (subtaskDragItem.current !== null && subtaskDragOverItem.current !== null) {
+      moveSubtask(subtaskDragItem.current, subtaskDragOverItem.current);
+    }
+    subtaskDragItem.current = null;
+    subtaskDragOverItem.current = null;
+  };
+
 
   const { isSubmitting } = form.formState;
 
@@ -191,7 +211,16 @@ export function EditTaskForm({ task, onSubmit, onCancel }: EditTaskFormProps) {
                 <FormLabel>Subtasks</FormLabel>
                 <div className="space-y-2 max-h-48 overflow-y-auto pr-2">
                     {subtaskFields.map((field, index) => (
-                        <div key={field.id} className="flex items-center gap-2">
+                        <div 
+                            key={field.id} 
+                            className="flex items-center gap-2 group"
+                            draggable
+                            onDragStart={() => handleSubtaskDragStart(index)}
+                            onDragEnter={() => handleSubtaskDragEnter(index)}
+                            onDragEnd={handleSubtaskDrop}
+                            onDragOver={(e) => e.preventDefault()}
+                        >
+                            <GripVertical className="h-5 w-5 text-muted-foreground cursor-grab" />
                             <FormField
                                 control={form.control}
                                 name={`subtasks.${index}.completed`}

@@ -13,7 +13,7 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator
 } from '@/components/ui/dropdown-menu';
-import { MoreHorizontal, Trash2, Archive, Circle, CheckCircle2, Edit, Link as LinkIcon, NotebookText, CalendarDays } from 'lucide-react';
+import { MoreHorizontal, Trash2, Archive, Circle, CheckCircle2, Edit, Link as LinkIcon, NotebookText, CalendarDays, Copy } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format, isPast, isToday } from 'date-fns';
 import { EditTaskForm } from './edit-task-form';
@@ -23,9 +23,10 @@ interface TaskItemProps {
   task: Task;
   onUpdate: (id: string, updates: Partial<Omit<Task, 'id' | 'createdAt'>>) => void;
   onDelete: (id: string) => void;
+  onDuplicate: (id: string) => void;
 }
 
-export function TaskItem({ task, onUpdate, onDelete }: TaskItemProps) {
+export function TaskItem({ task, onUpdate, onDelete, onDuplicate }: TaskItemProps) {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
   const handleCheck = (checked: boolean) => {
@@ -186,6 +187,10 @@ export function TaskItem({ task, onUpdate, onDelete }: TaskItemProps) {
                <DropdownMenuItem onClick={() => setIsEditDialogOpen(true)}>
                  <Edit className="mr-2 h-4 w-4" />
                  <span>Edit</span>
+               </DropdownMenuItem>
+               <DropdownMenuItem onClick={() => onDuplicate(task.id)}>
+                 <Copy className="mr-2 h-4 w-4" />
+                 <span>Duplicate</span>
                </DropdownMenuItem>
                <DropdownMenuSeparator />
               {task.status !== 'current' && (

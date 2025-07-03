@@ -15,6 +15,7 @@ interface TaskListProps {
   tasks: Task[];
   onUpdateTask: (id: string, updates: Partial<Omit<Task, 'id' | 'createdAt'>>) => void;
   onDeleteTask: (id: string) => void;
+  onDuplicateTask: (id: string) => void;
   search: string;
   setSearch: (search: string) => void;
 }
@@ -32,7 +33,7 @@ const formatDateHeading = (dateKey: string): string => {
     return format(date, 'MMMM d, yyyy');
 };
 
-export function TaskList({ tasks, onUpdateTask, onDeleteTask, search, setSearch }: TaskListProps) {
+export function TaskList({ tasks, onUpdateTask, onDeleteTask, onDuplicateTask, search, setSearch }: TaskListProps) {
   const [activeTab, setActiveTab] = useState<TaskStatus>('current');
   const [summaryData, setSummaryData] = useState<{ tasks: Task[], dateKey: string } | null>(null);
 
@@ -127,6 +128,7 @@ export function TaskList({ tasks, onUpdateTask, onDeleteTask, search, setSearch 
                                 task={task}
                                 onUpdate={onUpdateTask}
                                 onDelete={onDeleteTask}
+                                onDuplicate={onDuplicateTask}
                             />
                         ))}
                     </div>
