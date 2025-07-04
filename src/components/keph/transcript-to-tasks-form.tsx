@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, type ControllerRenderProps, type FieldPath } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { transcriptToTasks } from '@/ai/flows/transcript-to-tasks';
@@ -70,7 +70,7 @@ export function TranscriptToTasksForm({ onTasksCreated }: TranscriptToTasksFormP
         <FormField
           control={form.control}
           name="transcript"
-          render={({ field }) => (
+          render={({ field }: { field: ControllerRenderProps<z.infer<typeof formSchema>, 'transcript'> }) => (
             <FormItem>
               <FormLabel>Paste meeting transcript</FormLabel>
               <FormControl>
@@ -90,7 +90,7 @@ export function TranscriptToTasksForm({ onTasksCreated }: TranscriptToTasksFormP
         <FormField
           control={form.control}
           name="instructions"
-          render={({ field }) => (
+          render={({ field }: { field: ControllerRenderProps<z.infer<typeof formSchema>, 'instructions'> }) => (
             <FormItem>
               <FormLabel>Instructions (Optional)</FormLabel>
               <FormControl>

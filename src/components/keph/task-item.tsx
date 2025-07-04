@@ -13,10 +13,11 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator
 } from '@/components/ui/dropdown-menu';
-import { MoreHorizontal, Trash2, Archive, Circle, CheckCircle2, Edit, Link as LinkIcon, NotebookText, CalendarDays, Copy } from 'lucide-react';
+import { MoreHorizontal, Trash2, Archive, Circle, CheckCircle2, Edit, Link as LinkIcon, NotebookText, CalendarDays, Copy, Repeat } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format, isPast, isToday } from 'date-fns';
 import { EditTaskForm } from './edit-task-form';
+import { formatRecurrenceDisplay } from '@/lib/recurring-tasks';
 import { Progress } from '../ui/progress';
 
 interface TaskItemProps {
@@ -87,10 +88,10 @@ export function TaskItem({ task, onUpdate, onDelete, onDuplicate }: TaskItemProp
         onClick={() => setIsEditDialogOpen(true)}
         className={cn(
           'transition-all duration-200 ease-in-out hover:shadow-lg cursor-pointer',
-          'bg-muted/50 hover:bg-muted/95'
+          'bg-muted/50 hover:bg-muted/95 border border-border/50'
         )}
       >
-        <CardContent className="p-4 flex items-start gap-4">
+        <CardContent className="p-3 sm:p-4 flex items-start gap-3 sm:gap-4">
           <div className="mt-1 flex items-center" onClick={(e) => e.stopPropagation()}>
             <Checkbox
                 id={`task-${task.id}`}
@@ -174,6 +175,14 @@ export function TaskItem({ task, onUpdate, onDelete, onDuplicate }: TaskItemProp
                   </div>
               </div>
             )}
+            {task.recurrence && (
+              <div className="flex items-center pt-1 text-xs text-muted-foreground">
+                  <div className="flex items-center gap-1.5">
+                      <Repeat className="h-3.5 w-3.5" />
+                      <span>{formatRecurrenceDisplay(task.recurrence)}</span>
+                  </div>
+              </div>
+            )}
           </div>
 
           <DropdownMenu>
@@ -225,15 +234,20 @@ export function TaskItem({ task, onUpdate, onDelete, onDuplicate }: TaskItemProp
       </Card>
 
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="sm:max-w-3xl">
-            <DialogHeader>
-                <DialogTitle>Edit Task</DialogTitle>
-            </DialogHeader>
-            <EditTaskForm 
-                task={task} 
-                onSubmit={handleEditSubmit}
-                onCancel={() => setIsEditDialogOpen(false)}
-            />
+        <DialogContent className="sm:max-w-4xl border-0 bg-gradient-to-br from-background/95 to-muted/50 backdrop-blur-xl shadow-2xl">
+            <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-accent/5 rounded-lg" />
+            <div className="relative">
+                <DialogHeader className="pb-6">
+                    <DialogTitle className="text-2xl font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
+                        Edit Task
+                    </DialogTitle>
+                </DialogHeader>
+                <EditTaskForm 
+                    task={task} 
+                    onSubmit={handleEditSubmit}
+                    onCancel={() => setIsEditDialogOpen(false)}
+                />
+            </div>
         </DialogContent>
       </Dialog>
     </>

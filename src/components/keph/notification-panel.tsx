@@ -30,10 +30,15 @@ export function NotificationPanel({
   
   if (notifications.length === 0) {
     return (
-        <div className="flex flex-col items-center justify-center h-full text-center text-muted-foreground">
-            <Bell className="w-12 h-12 mb-4" />
-            <h3 className="text-lg font-semibold">No new notifications</h3>
-            <p className="text-sm">You're all caught up!</p>
+        <div className="flex flex-col items-center justify-center h-full text-center">
+            <div className="relative mb-6">
+                <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-accent/10 rounded-3xl blur-xl" />
+                <div className="relative w-20 h-20 bg-gradient-to-br from-muted/30 to-accent/20 rounded-3xl flex items-center justify-center">
+                    <Bell className="w-8 h-8 text-muted-foreground" />
+                </div>
+            </div>
+            <h3 className="text-lg font-semibold text-foreground mb-2">All Clear!</h3>
+            <p className="text-sm text-muted-foreground">No new notifications to review</p>
         </div>
     );
   }
@@ -60,31 +65,36 @@ export function NotificationPanel({
 
     if (isSingleTask && singleTask) {
         return (
-            <Card key={notification.id} className="bg-muted/50">
-                <CardHeader className="flex flex-row items-start justify-between pb-2">
-                   <div className="space-y-1.5">
-                     <CardTitle className="text-base">{notification.title}</CardTitle>
-                     <p className="text-xs text-muted-foreground">
-                        {formatDistanceToNow(notification.createdAt, { addSuffix: true })}
-                     </p>
-                   </div>
-                   <Button variant="ghost" size="icon" className="h-8 w-8 -m-2" onClick={() => onDismissNotification(notification.id)}>
-                       <X className="h-4 w-4" />
-                       <span className="sr-only">Dismiss</span>
-                   </Button>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                    <p className="text-sm text-muted-foreground pt-1">Task: "{singleTask.title}"</p>
-                    <div className="flex justify-end gap-2">
-                        <Button variant="outline" size="sm" onClick={() => onKeepInPending([singleTask.id])}>
-                            Keep in Pending
-                        </Button>
-                        <Button size="sm" onClick={() => onMoveOverdueToToday([singleTask.id])}>
-                            Move to Today
+            <div key={notification.id} className="relative group">
+                <div className="absolute inset-0 bg-gradient-to-br from-destructive/5 to-orange-500/5 rounded-2xl blur-sm" />
+                <div className="relative bg-card/80 backdrop-blur-sm border border-border/50 rounded-2xl p-6 hover:shadow-lg transition-all duration-300 hover:border-border">
+                    <div className="flex items-start justify-between mb-4">
+                        <div className="space-y-2">
+                            <h3 className="text-base font-semibold text-foreground">{notification.title}</h3>
+                            <p className="text-xs text-muted-foreground">
+                                {formatDistanceToNow(notification.createdAt, { addSuffix: true })}
+                            </p>
+                        </div>
+                        <Button variant="ghost" size="icon" className="h-8 w-8 opacity-60 hover:opacity-100 transition-opacity" onClick={() => onDismissNotification(notification.id)}>
+                            <X className="h-4 w-4" />
+                            <span className="sr-only">Dismiss</span>
                         </Button>
                     </div>
-                </CardContent>
-            </Card>
+                    <div className="space-y-4">
+                        <div className="p-3 bg-muted/30 rounded-xl border border-border/30">
+                            <p className="text-sm font-medium text-foreground">"{singleTask.title}"</p>
+                        </div>
+                        <div className="flex justify-end gap-3">
+                            <Button variant="outline" size="sm" className="rounded-xl" onClick={() => onKeepInPending([singleTask.id])}>
+                                Keep in Pending
+                            </Button>
+                            <Button size="sm" className="rounded-xl bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70" onClick={() => onMoveOverdueToToday([singleTask.id])}>
+                                Move to Today
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+            </div>
         )
     }
 
@@ -100,57 +110,60 @@ export function NotificationPanel({
         }}
         asChild
       >
-        <Card className="bg-muted/50">
-            <CollapsibleTrigger asChild>
-                <div className="p-4 cursor-pointer hover:bg-muted/80 rounded-t-lg">
-                    <CardHeader className="flex flex-row items-start justify-between p-0">
-                      <div className="space-y-1.5">
-                          <CardTitle className="text-base">{notification.title}</CardTitle>
-                          <p className="text-xs text-muted-foreground">
-                              {formatDistanceToNow(notification.createdAt, { addSuffix: true })}
-                          </p>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <ChevronDown className={cn("h-4 w-4 transition-transform", expandedId === notification.id && "rotate-180")} />
-                        <Button variant="ghost" size="icon" className="h-6 w-6" onClick={(e) => { e.stopPropagation(); onDismissNotification(notification.id); }}>
-                            <X className="h-4 w-4" />
-                            <span className="sr-only">Dismiss</span>
+        <div className="relative group">
+            <div className="absolute inset-0 bg-gradient-to-br from-destructive/5 to-orange-500/5 rounded-2xl blur-sm" />
+            <div className="relative bg-card/80 backdrop-blur-sm border border-border/50 rounded-2xl overflow-hidden hover:shadow-lg transition-all duration-300 hover:border-border">
+                <CollapsibleTrigger asChild>
+                    <div className="p-6 cursor-pointer hover:bg-muted/20 transition-colors">
+                        <div className="flex items-start justify-between">
+                          <div className="space-y-2">
+                              <h3 className="text-base font-semibold text-foreground">{notification.title}</h3>
+                              <p className="text-xs text-muted-foreground">
+                                  {formatDistanceToNow(notification.createdAt, { addSuffix: true })}
+                              </p>
+                          </div>
+                          <div className="flex items-center gap-3">
+                            <ChevronDown className={cn("h-4 w-4 transition-transform text-muted-foreground", expandedId === notification.id && "rotate-180")} />
+                            <Button variant="ghost" size="icon" className="h-8 w-8 opacity-60 hover:opacity-100 transition-opacity" onClick={(e) => { e.stopPropagation(); onDismissNotification(notification.id); }}>
+                                <X className="h-4 w-4" />
+                                <span className="sr-only">Dismiss</span>
+                            </Button>
+                          </div>
+                        </div>
+                        <div className="mt-3">
+                            <p className="text-sm text-muted-foreground">{notification.description}</p>
+                        </div>
+                    </div>
+                </CollapsibleTrigger>
+                <CollapsibleContent>
+                    <div className="px-6 pb-4 space-y-4">
+                      <div className="h-px bg-gradient-to-r from-transparent via-border to-transparent" />
+                       <div className="max-h-48 overflow-y-auto space-y-2 pr-2">
+                        {notification.data.map((task: Task) => (
+                          <div key={task.id} className="flex items-center gap-3 p-3 rounded-xl bg-muted/20 border border-border/30 hover:bg-muted/30 transition-colors">
+                            <Checkbox 
+                              id={`select-${task.id}`}
+                              checked={selectedTaskIds.includes(task.id)}
+                              onCheckedChange={() => handleToggleTaskSelection(task.id)}
+                            />
+                            <label htmlFor={`select-${task.id}`} className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 flex-1">
+                              {task.title}
+                            </label>
+                          </div>
+                        ))}
+                       </div>
+                    </div>
+                    <div className="flex justify-end gap-3 px-6 py-4 bg-muted/10 border-t border-border/30">
+                        <Button variant="outline" size="sm" className="rounded-xl" onClick={handleKeepSelected} disabled={selectedTaskIds.length === 0}>
+                            Keep Selected
                         </Button>
-                      </div>
-                    </CardHeader>
-                    <CardContent className="p-0 pt-2">
-                        <p className="text-sm text-muted-foreground">{notification.description}</p>
-                    </CardContent>
-                </div>
-            </CollapsibleTrigger>
-            <CollapsibleContent>
-                <div className="p-4 pt-2 space-y-3">
-                  <Separator />
-                   <div className="max-h-48 overflow-y-auto space-y-2 pr-2">
-                    {notification.data.map((task: Task) => (
-                      <div key={task.id} className="flex items-center gap-3 p-2 rounded-md bg-background">
-                        <Checkbox 
-                          id={`select-${task.id}`}
-                          checked={selectedTaskIds.includes(task.id)}
-                          onCheckedChange={() => handleToggleTaskSelection(task.id)}
-                        />
-                        <label htmlFor={`select-${task.id}`} className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                          {task.title}
-                        </label>
-                      </div>
-                    ))}
-                   </div>
-                </div>
-                <CardFooter className="flex justify-end gap-2 bg-muted/30 py-3">
-                    <Button variant="outline" size="sm" onClick={handleKeepSelected} disabled={selectedTaskIds.length === 0}>
-                        Keep Selected
-                    </Button>
-                    <Button size="sm" onClick={handleMoveSelected} disabled={selectedTaskIds.length === 0}>
-                        Move Selected
-                    </Button>
-                </CardFooter>
-            </CollapsibleContent>
-        </Card>
+                        <Button size="sm" className="rounded-xl bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70" onClick={handleMoveSelected} disabled={selectedTaskIds.length === 0}>
+                            Move Selected
+                        </Button>
+                    </div>
+                </CollapsibleContent>
+            </div>
+        </div>
       </Collapsible>
     )
 
@@ -164,23 +177,24 @@ export function NotificationPanel({
             }
             // Future-proofing for other notification types
             return (
-                <Card key={notification.id} className="bg-muted/50">
-                    <CardHeader className="flex flex-row items-start justify-between pb-4">
-                      <div className="space-y-1.5">
-                        <CardTitle className="text-base">{notification.title}</CardTitle>
-                        <p className="text-xs text-muted-foreground">
-                            {formatDistanceToNow(notification.createdAt, { addSuffix: true })}
-                        </p>
-                      </div>
-                      <Button variant="ghost" size="icon" className="h-8 w-8 -m-2" onClick={() => onDismissNotification(notification.id)}>
-                          <X className="h-4 w-4" />
-                          <span className="sr-only">Dismiss</span>
-                      </Button>
-                    </CardHeader>
-                    <CardContent>
-                        <p className="text-sm text-muted-foreground mb-4">{notification.description}</p>
-                    </CardContent>
-                </Card>
+                <div key={notification.id} className="relative group">
+                    <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-accent/5 rounded-2xl blur-sm" />
+                    <div className="relative bg-card/80 backdrop-blur-sm border border-border/50 rounded-2xl p-6 hover:shadow-lg transition-all duration-300 hover:border-border">
+                        <div className="flex items-start justify-between mb-4">
+                          <div className="space-y-2">
+                            <h3 className="text-base font-semibold text-foreground">{notification.title}</h3>
+                            <p className="text-xs text-muted-foreground">
+                                {formatDistanceToNow(notification.createdAt, { addSuffix: true })}
+                            </p>
+                          </div>
+                          <Button variant="ghost" size="icon" className="h-8 w-8 opacity-60 hover:opacity-100 transition-opacity" onClick={() => onDismissNotification(notification.id)}>
+                              <X className="h-4 w-4" />
+                              <span className="sr-only">Dismiss</span>
+                          </Button>
+                        </div>
+                        <p className="text-sm text-muted-foreground">{notification.description}</p>
+                    </div>
+                </div>
             );
         })}
     </div>

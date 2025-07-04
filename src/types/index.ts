@@ -1,5 +1,14 @@
 export type TaskStatus = 'current' | 'completed' | 'pending';
 
+export type RecurrenceType = 'none' | 'daily' | 'weekly' | 'monthly' | 'yearly';
+
+export interface RecurrenceConfig {
+  type: RecurrenceType;
+  interval: number; // e.g., every 2 weeks = interval: 2, type: 'weekly'
+  endDate?: Date;
+  maxOccurrences?: number;
+}
+
 export interface Subtask {
   id: string;
   title: string;
@@ -21,6 +30,9 @@ export interface Task {
   urls?: Url[];
   dueDate?: Date;
   completedAt?: Date;
+  recurrence?: RecurrenceConfig;
+  parentRecurringTaskId?: string; // Links to the original recurring task
+  isRecurringInstance?: boolean;
 }
 
 export type NotificationType = 'overdue-tasks';

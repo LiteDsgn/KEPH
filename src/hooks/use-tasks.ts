@@ -3,6 +3,7 @@
 import { useState, useCallback, useMemo, useEffect } from 'react';
 import type { Task, TaskStatus } from '@/types';
 import { isBefore, startOfToday, subDays, addDays, isToday } from 'date-fns';
+import { getPendingRecurringInstances, shouldGenerateNextInstance, createRecurringTaskInstance } from '@/lib/recurring-tasks';
 
 const generateInitialTasks = (): Task[] => {
   const today = new Date();
@@ -123,8 +124,8 @@ export function useTasks() {
   }, []);
 
   const updateTask = useCallback((taskId: string, updates: Partial<Omit<Task, 'id' | 'createdAt'>>) => {
-    setTasks((prev) =>
-      prev.map((task) => {
+    setTasks((prev) => {
+      const updatedTasks = prev.map((task) => {
         if (task.id === taskId) {
             const updatedTask = { ...task, ...updates };
             if (updates.status === 'completed' && !task.completedAt) {
@@ -136,8 +137,26 @@ export function useTasks() {
             return updatedTask;
         }
         return task;
-    })
-    );
+      });
+
+      // Check if we need to generate recurring task instances
+      const completedTask = updatedTasks.find(t => t.id === taskId);
+      if (completedTask && updates.status === 'completed' && shouldGenerateNextInstance(completedTask)) {
+        try {
+          const newInstance = createRecurringTaskInstance(completedTask);
+          const newTask: Task = {
+            id: crypto.randomUUID(),
+            ...newInstance,
+            createdAt: new Date(),
+          };
+          return [newTask, ...updatedTasks];
+        } catch (error) {
+          console.error('Error creating recurring task instance:', error);
+        }
+      }
+
+      return updatedTasks;
+    });
   }, []);
 
   const updateMultipleTasks = useCallback((taskIds: string[], updates: Partial<Omit<Task, 'id' | 'createdAt'>>) => {

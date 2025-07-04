@@ -29,6 +29,41 @@ declare global {
     }
 }
 
+// Type definitions for SpeechRecognition API
+interface SpeechRecognitionEvent {
+    error?: string;
+    results: SpeechRecognitionResultList;
+}
+
+interface SpeechRecognitionResultList {
+    [index: number]: SpeechRecognitionResult;
+    length: number;
+}
+
+interface SpeechRecognitionResult {
+    [index: number]: SpeechRecognitionAlternative;
+    isFinal: boolean;
+    length: number;
+}
+
+interface SpeechRecognitionAlternative {
+    transcript: string;
+    confidence: number;
+}
+
+interface SpeechRecognition {
+    continuous: boolean;
+    interimResults: boolean;
+    lang: string;
+    onstart: (() => void) | null;
+    onend: (() => void) | null;
+    onerror: ((event: SpeechRecognitionEvent) => void) | null;
+    onresult: ((event: SpeechRecognitionEvent) => void) | null;
+    start(): void;
+    stop(): void;
+    abort(): void;
+}
+
 const formSchema = z.object({
   description: z
     .string()
@@ -83,15 +118,15 @@ export function TextToTasksForm({ onTasksCreated }: TextToTasksFormProps) {
         setIsListening(false);
     };
 
-    recognition.onerror = (event) => {
+    recognition.onerror = (event: SpeechRecognitionEvent) => {
         console.error('Speech recognition error', event);
         setSpeechError(`Speech error: ${event.error}. Please try again.`);
         setIsListening(false);
     };
     
-    recognition.onresult = (event) => {
+    recognition.onresult = (event: SpeechRecognitionEvent) => {
         const currentTranscript = Array.from(event.results)
-            .map(result => result[0].transcript)
+            .map((result: SpeechRecognitionResult) => result[0].transcript)
             .join('');
         
         let newText = initialTranscriptRef.current;

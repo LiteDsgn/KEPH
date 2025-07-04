@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef } from 'react';
-import { useForm, useFieldArray } from 'react-hook-form';
+import { useForm, useFieldArray, type ControllerRenderProps, type FieldPath } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Button } from '@/components/ui/button';
@@ -16,13 +16,14 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, PlusCircle, X, CalendarIcon, Sparkles, GripVertical } from 'lucide-react';
-import type { Task } from '@/types';
+import { Loader2, PlusCircle, X, CalendarIcon, Sparkles, GripVertical, Repeat } from 'lucide-react';
+import type { Task, RecurrenceType } from '@/types';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { Calendar } from '../ui/calendar';
 import { Separator } from '../ui/separator';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { generateSubtasks } from '@/ai/flows/generate-subtasks';
 
 const formSchema = z.object({
@@ -35,6 +36,10 @@ const formSchema = z.object({
     value: z.string().url({ message: "Please enter a valid URL." }).min(1, 'URL cannot be empty.'),
   })).optional(),
   dueDate: z.date().optional(),
+  recurrenceType: z.enum(['none', 'daily', 'weekly', 'monthly', 'yearly']).default('none'),
+  recurrenceInterval: z.number().min(1, 'Interval must be at least 1').default(1),
+  recurrenceEndDate: z.date().optional(),
+  recurrenceMaxOccurrences: z.number().min(1, 'Max occurrences must be at least 1').optional(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -60,6 +65,10 @@ export function ManualTaskForm({ onTaskCreated, onCancel }: ManualTaskFormProps)
       notes: '',
       urls: [],
       dueDate: undefined,
+      recurrenceType: 'none',
+      recurrenceInterval: 1,
+      recurrenceEndDate: undefined,
+      recurrenceMaxOccurrences: undefined,
     },
   });
 
@@ -95,7 +104,7 @@ export function ManualTaskForm({ onTaskCreated, onCancel }: ManualTaskFormProps)
   async function onSubmit(values: FormValues) {
     setIsSubmitting(true);
     try {
-      onTaskCreated({
+      const taskData: Omit<Task, 'id' | 'status' | 'createdAt' | 'completedAt'> = {
         title: values.title,
         notes: values.notes,
         urls: values.urls?.map(u => ({
@@ -108,11 +117,25 @@ export function ManualTaskForm({ onTaskCreated, onCancel }: ManualTaskFormProps)
             completed: false,
         })),
         dueDate: values.dueDate,
-      });
+      };
+
+      // Add recurrence configuration if not 'none'
+      if (values.recurrenceType !== 'none') {
+        taskData.recurrence = {
+          type: values.recurrenceType,
+          interval: values.recurrenceInterval,
+          endDate: values.recurrenceEndDate,
+          maxOccurrences: values.recurrenceMaxOccurrences,
+        };
+      }
+
+      onTaskCreated(taskData);
       form.reset();
       toast({
           title: 'Task Added',
-          description: 'Your new task has been created.',
+          description: values.recurrenceType !== 'none' 
+            ? 'Your recurring task has been created.' 
+            : 'Your new task has been created.',
       })
     } catch (error) {
       console.error('Error creating task:', error);
@@ -196,7 +219,7 @@ export function ManualTaskForm({ onTaskCreated, onCancel }: ManualTaskFormProps)
                     <FormField
                       control={form.control}
                       name="title"
-                      render={({ field }) => (
+                      render={({ field }: { field: ControllerRenderProps<FormValues, "title"> }) => (
                           <FormItem>
                           <FormLabel>Task Title</FormLabel>
                           <FormControl>
@@ -210,7 +233,7 @@ export function ManualTaskForm({ onTaskCreated, onCancel }: ManualTaskFormProps)
                     <FormField
                       control={form.control}
                       name="dueDate"
-                      render={({ field }) => (
+                      render={({ field }: { field: ControllerRenderProps<FormValues, "dueDate"> }) => (
                         <FormItem className="flex flex-col">
                           <FormLabel>Due Date</FormLabel>
                           <Popover>
@@ -246,10 +269,133 @@ export function ManualTaskForm({ onTaskCreated, onCancel }: ManualTaskFormProps)
                       )}
                     />
 
+                    {/* Recurrence Configuration */}
+                    <div className="space-y-4 p-4 border rounded-lg bg-muted/20">
+                      <div className="flex items-center gap-2">
+                        <Repeat className="h-4 w-4 text-muted-foreground" />
+                        <FormLabel className="text-sm font-medium">Recurrence (Optional)</FormLabel>
+                      </div>
+                      
+                      <FormField
+                control={form.control}
+                name="recurrenceType"
+                render={({ field }: { field: ControllerRenderProps<FormValues, "recurrenceType"> }) => (
+                  <FormItem>
+                    <FormLabel>Repeat</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select recurrence" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="none">No repeat</SelectItem>
+                        <SelectItem value="daily">Daily</SelectItem>
+                        <SelectItem value="weekly">Weekly</SelectItem>
+                        <SelectItem value="monthly">Monthly</SelectItem>
+                        <SelectItem value="yearly">Yearly</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+                      {form.watch('recurrenceType') !== 'none' && (
+                        <>
+                          <FormField
+                            control={form.control}
+                            name="recurrenceInterval"
+                            render={({ field }: { field: ControllerRenderProps<FormValues, "recurrenceInterval"> }) => (
+                              <FormItem>
+                                <FormLabel>
+                                  Every {field.value || 1} {form.watch('recurrenceType')}{field.value > 1 ? 's' : ''}
+                                </FormLabel>
+                                <FormControl>
+                                  <Input
+                                    type="number"
+                                    min="1"
+                                    max="365"
+                                    {...field}
+                                    onChange={(e) => field.onChange(parseInt(e.target.value) || 1)}
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <FormField
+                              control={form.control}
+                              name="recurrenceEndDate"
+                              render={({ field }: { field: ControllerRenderProps<FormValues, "recurrenceEndDate"> }) => (
+                                <FormItem className="flex flex-col">
+                                  <FormLabel>End Date (Optional)</FormLabel>
+                                  <Popover>
+                                    <PopoverTrigger asChild>
+                                      <FormControl>
+                                        <Button
+                                          variant={"outline"}
+                                          className={cn(
+                                            "w-full justify-start text-left font-normal",
+                                            !field.value && "text-muted-foreground"
+                                          )}
+                                        >
+                                          <CalendarIcon className="mr-2 h-4 w-4" />
+                                          {field.value ? (
+                                            format(field.value, "PPP")
+                                          ) : (
+                                            <span>No end date</span>
+                                          )}
+                                        </Button>
+                                      </FormControl>
+                                    </PopoverTrigger>
+                                    <PopoverContent className="w-auto p-0" align="start">
+                                      <Calendar
+                                        mode="single"
+                                        selected={field.value}
+                                        onSelect={field.onChange}
+                                        initialFocus
+                                        disabled={(date) => date < new Date()}
+                                      />
+                                    </PopoverContent>
+                                  </Popover>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+
+                            <FormField
+                              control={form.control}
+                              name="recurrenceMaxOccurrences"
+                              render={({ field }: { field: ControllerRenderProps<FormValues, "recurrenceMaxOccurrences"> }) => (
+                                <FormItem>
+                                  <FormLabel>Max Occurrences (Optional)</FormLabel>
+                                  <FormControl>
+                                    <Input
+                                      type="number"
+                                      min="1"
+                                      max="1000"
+                                      placeholder="e.g., 10"
+                                      {...field}
+                                      onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : undefined)}
+                                      value={field.value || ''}
+                                    />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                          </div>
+                        </>
+                      )}
+                    </div>
+
                     <FormItem>
                         <FormLabel>Subtasks (Optional)</FormLabel>
                         <div className="space-y-2 max-h-48 overflow-y-auto p-2">
-                            {subtaskFields.map((field, index) => (
+                            {subtaskFields.map((field: any, index: number) => (
                                 <div 
                                     key={field.id}
                                     className="flex items-center gap-2 group"
@@ -263,7 +409,7 @@ export function ManualTaskForm({ onTaskCreated, onCancel }: ManualTaskFormProps)
                                     <FormField
                                         control={form.control}
                                         name={`subtasks.${index}.title`}
-                                        render={({ field }) => (
+                                        render={({ field }: { field: ControllerRenderProps<FormValues, `subtasks.${number}.title`> }) => (
                                           <FormControl>
                                               <Input {...field} placeholder={`Subtask ${index + 1}`} />
                                           </FormControl>
@@ -300,7 +446,7 @@ export function ManualTaskForm({ onTaskCreated, onCancel }: ManualTaskFormProps)
                      <FormField
                         control={form.control}
                         name="notes"
-                        render={({ field }) => (
+                        render={({ field }: { field: ControllerRenderProps<FormValues, "notes"> }) => (
                             <FormItem>
                             <FormLabel>Notes (Optional)</FormLabel>
                             <FormControl>
@@ -314,12 +460,12 @@ export function ManualTaskForm({ onTaskCreated, onCancel }: ManualTaskFormProps)
                     <FormItem>
                         <FormLabel>URLs (Optional)</FormLabel>
                         <div className="space-y-2 max-h-48 overflow-y-auto p-2">
-                            {urlFields.map((field, index) => (
+                            {urlFields.map((field: any, index: number) => (
                                 <div key={field.id} className="flex items-center gap-2">
                                     <FormField
                                         control={form.control}
                                         name={`urls.${index}.value`}
-                                        render={({ field }) => (
+                                        render={({ field }: { field: ControllerRenderProps<FormValues, `urls.${number}.value`> }) => (
                                           <FormControl>
                                               <Input {...field} placeholder="https://related-link.com" />
                                           </FormControl>

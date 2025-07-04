@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef } from 'react';
-import { useForm, useFieldArray } from 'react-hook-form';
+import { useForm, useFieldArray, ControllerRenderProps, FieldPath } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Button } from '@/components/ui/button';
@@ -15,8 +15,15 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
-import type { Task } from '@/types';
-import { Loader2, X, Sparkles, CalendarIcon, GripVertical, PlusCircle } from 'lucide-react';
+import type { Task, RecurrenceType } from '@/types';
+import { Loader2, X, Sparkles, CalendarIcon, GripVertical, PlusCircle, Repeat } from 'lucide-react';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
 import { generateSubtasks } from '@/ai/flows/generate-subtasks';
 import { useToast } from '@/hooks/use-toast';
@@ -38,6 +45,10 @@ const formSchema = z.object({
     value: z.string().url({ message: "Please enter a valid URL." }).min(1, 'URL cannot be empty.'),
   })).optional(),
   dueDate: z.date().optional(),
+  recurrenceType: z.enum(['none', 'daily', 'weekly', 'monthly', 'yearly']).default('none'),
+  recurrenceInterval: z.number().min(1).default(1),
+  recurrenceEndDate: z.date().optional(),
+  recurrenceMaxOccurrences: z.number().min(1).optional(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -63,6 +74,10 @@ export function EditTaskForm({ task, onSubmit, onCancel }: EditTaskFormProps) {
       notes: task.notes || '',
       urls: task.urls || [],
       dueDate: task.dueDate,
+      recurrenceType: task.recurrence?.type || 'none',
+      recurrenceInterval: task.recurrence?.interval || 1,
+      recurrenceEndDate: task.recurrence?.endDate,
+      recurrenceMaxOccurrences: task.recurrence?.maxOccurrences,
     },
   });
 
@@ -99,7 +114,27 @@ export function EditTaskForm({ task, onSubmit, onCancel }: EditTaskFormProps) {
   const { isSubmitting } = form.formState;
 
   const handleSubmit = async (values: FormValues) => {
-    await onSubmit(values);
+    const updates: Partial<Omit<Task, 'id' | 'createdAt'>> = {
+      title: values.title,
+      subtasks: values.subtasks,
+      notes: values.notes,
+      urls: values.urls,
+      dueDate: values.dueDate,
+    };
+
+    // Add recurrence configuration if not 'none'
+    if (values.recurrenceType !== 'none') {
+      updates.recurrence = {
+        type: values.recurrenceType as RecurrenceType,
+        interval: values.recurrenceInterval,
+        endDate: values.recurrenceEndDate,
+        maxOccurrences: values.recurrenceMaxOccurrences,
+      };
+    } else {
+      updates.recurrence = undefined;
+    }
+
+    await onSubmit(updates);
     form.reset();
   }
 
@@ -163,11 +198,11 @@ export function EditTaskForm({ task, onSubmit, onCancel }: EditTaskFormProps) {
             <FormField
               control={form.control}
               name="title"
-              render={({ field }) => (
+              render={({ field }: { field: ControllerRenderProps<FormValues, "title"> }) => (
                 <FormItem>
-                  <FormLabel>Title</FormLabel>
+                  <FormLabel>Task Title</FormLabel>
                   <FormControl>
-                    <Input {...field} />
+                    <Input placeholder="Enter task title" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -177,7 +212,7 @@ export function EditTaskForm({ task, onSubmit, onCancel }: EditTaskFormProps) {
             <FormField
               control={form.control}
               name="dueDate"
-              render={({ field }) => (
+              render={({ field }: { field: ControllerRenderProps<FormValues, "dueDate"> }) => (
                 <FormItem className="flex flex-col">
                   <FormLabel>Due Date</FormLabel>
                   <Popover>
@@ -212,11 +247,128 @@ export function EditTaskForm({ task, onSubmit, onCancel }: EditTaskFormProps) {
                 </FormItem>
               )}
             />
+
+            {/* Recurrence Configuration */}
+            <div className="space-y-4 p-4 border rounded-lg bg-muted/20">
+              <h3 className="text-sm font-medium flex items-center gap-2">
+                <Repeat className="h-4 w-4" />
+                Recurrence Settings
+              </h3>
+              
+              <FormField
+                control={form.control}
+                name="recurrenceType"
+                render={({ field }: { field: ControllerRenderProps<FormValues, "recurrenceType"> }) => (
+                  <FormItem>
+                    <FormLabel>Repeat</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select recurrence" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="none">No repeat</SelectItem>
+                        <SelectItem value="daily">Daily</SelectItem>
+                        <SelectItem value="weekly">Weekly</SelectItem>
+                        <SelectItem value="monthly">Monthly</SelectItem>
+                        <SelectItem value="yearly">Yearly</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {form.watch('recurrenceType') !== 'none' && (
+                <>
+                  <FormField
+                    control={form.control}
+                    name="recurrenceInterval"
+                    render={({ field }: { field: ControllerRenderProps<FormValues, "recurrenceInterval"> }) => (
+                      <FormItem>
+                        <FormLabel>Every</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="number"
+                            min="1"
+                            placeholder="1"
+                            {...field}
+                            onChange={(e) => field.onChange(parseInt(e.target.value) || 1)}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="recurrenceEndDate"
+                    render={({ field }: { field: ControllerRenderProps<FormValues, "recurrenceEndDate"> }) => (
+                      <FormItem className="flex flex-col">
+                        <FormLabel>End Date (Optional)</FormLabel>
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <FormControl>
+                              <Button
+                                variant="outline"
+                                className={cn(
+                                  "w-full justify-start text-left font-normal",
+                                  !field.value && "text-muted-foreground"
+                                )}
+                              >
+                                <CalendarIcon className="mr-2 h-4 w-4" />
+                                {field.value ? (
+                                  format(field.value, "PPP")
+                                ) : (
+                                  <span>No end date</span>
+                                )}
+                              </Button>
+                            </FormControl>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto p-0" align="start">
+                            <Calendar
+                              mode="single"
+                              selected={field.value}
+                              onSelect={field.onChange}
+                              disabled={(date) => date < new Date()}
+                              initialFocus
+                            />
+                          </PopoverContent>
+                        </Popover>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="recurrenceMaxOccurrences"
+                    render={({ field }: { field: ControllerRenderProps<FormValues, "recurrenceMaxOccurrences"> }) => (
+                      <FormItem>
+                        <FormLabel>Max Occurrences (Optional)</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="number"
+                            min="1"
+                            placeholder="Unlimited"
+                            {...field}
+                            onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : undefined)}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </>
+              )}
+            </div>
             
             <FormItem>
                 <FormLabel>Subtasks</FormLabel>
                 <div className="space-y-2 max-h-48 overflow-y-auto p-2">
-                    {subtaskFields.map((field, index) => (
+                    {subtaskFields.map((field: any, index: number) => (
                         <div 
                             key={field.id} 
                             className="flex items-center gap-2 group"
@@ -230,7 +382,7 @@ export function EditTaskForm({ task, onSubmit, onCancel }: EditTaskFormProps) {
                             <FormField
                                 control={form.control}
                                 name={`subtasks.${index}.completed`}
-                                render={({ field: checkboxField }) => (
+                                render={({ field: checkboxField }: { field: ControllerRenderProps<FormValues, `subtasks.${number}.completed`> }) => (
                                 <FormControl>
                                     <Input type="checkbox" checked={checkboxField.value} onChange={checkboxField.onChange} className="hidden" />
                                 </FormControl>
@@ -239,7 +391,7 @@ export function EditTaskForm({ task, onSubmit, onCancel }: EditTaskFormProps) {
                             <FormField
                                 control={form.control}
                                 name={`subtasks.${index}.title`}
-                                render={({ field: inputField }) => (
+                                render={({ field: inputField }: { field: ControllerRenderProps<FormValues, `subtasks.${number}.title`> }) => (
                                     <FormControl>
                                     <Input {...inputField} placeholder={`Subtask ${index + 1}`} />
                                     </FormControl>
@@ -276,7 +428,7 @@ export function EditTaskForm({ task, onSubmit, onCancel }: EditTaskFormProps) {
             <FormField
               control={form.control}
               name="notes"
-              render={({ field }) => (
+              render={({ field }: { field: ControllerRenderProps<FormValues, "notes"> }) => (
                 <FormItem>
                   <FormLabel>Notes</FormLabel>
                   <FormControl>
@@ -290,12 +442,12 @@ export function EditTaskForm({ task, onSubmit, onCancel }: EditTaskFormProps) {
             <FormItem>
                 <FormLabel>URLs</FormLabel>
                 <div className="space-y-2 max-h-48 overflow-y-auto p-2">
-                    {urlFields.map((field, index) => (
+                    {urlFields.map((field: any, index: number) => (
                         <div key={field.id} className="flex items-center gap-2">
                              <FormField
                                 control={form.control}
                                 name={`urls.${index}.value`}
-                                render={({ field: inputField }) => (
+                                render={({ field: inputField }: { field: ControllerRenderProps<FormValues, `urls.${number}.value`> }) => (
                                     <FormControl>
                                       <Input {...inputField} placeholder="https://example.com" />
                                     </FormControl>

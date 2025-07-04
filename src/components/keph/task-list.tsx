@@ -100,7 +100,7 @@ export function TaskList({ tasks, onUpdateTask, onDeleteTask, onDuplicateTask, s
     });
 
     return (
-      <div className="space-y-6">
+      <div className="space-y-4 sm:space-y-6">
         {sortedGroupKeys.map((dateKey) => {
             const groupTasks = groupedTasks[dateKey];
             const sortedGroupTasks = sortTasks(groupTasks);
@@ -121,7 +121,7 @@ export function TaskList({ tasks, onUpdateTask, onDeleteTask, onDuplicateTask, s
                             </Button>
                         )}
                     </div>
-                    <div className="space-y-4">
+                    <div className="space-y-3 sm:space-y-4">
                         {sortedGroupTasks.map(task => (
                             <TaskItem
                                 key={task.id}
@@ -157,47 +157,88 @@ export function TaskList({ tasks, onUpdateTask, onDeleteTask, onDuplicateTask, s
 
   return (
     <>
-        <Card>
-            <CardHeader>
-                <CardTitle>Your Tasks</CardTitle>
-                <div className="relative mt-2">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                    placeholder="Search tasks..."
-                    className="pl-10"
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                />
+        <div className="h-full flex flex-col">
+            {/* Modern Header with Search */}
+            <div className="p-4 sm:p-6 pb-3 sm:pb-4 border-b border-border/30">
+                <div className="flex items-center gap-3 mb-4">
+                    <div className="w-8 h-8 bg-gradient-to-br from-primary/20 to-accent/20 rounded-lg flex items-center justify-center">
+                        <CheckCircle2 className="w-4 h-4 text-primary" />
+                    </div>
+                    <h2 className="text-xl font-semibold text-foreground">Task Management</h2>
                 </div>
-            </CardHeader>
-            <CardContent>
-                <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as TaskStatus)}>
-                <TabsList className="grid w-full grid-cols-3">
-                    <TabsTrigger value="current">
-                    <Circle className="w-4 h-4 mr-2"/>
-                    Current ({getCount('current')})
-                    </TabsTrigger>
-                    <TabsTrigger value="completed">
-                    <CheckCircle2 className="w-4 h-4 mr-2"/>
-                    Completed ({getCount('completed')})
-                    </TabsTrigger>
-                    <TabsTrigger value="pending">
-                    <Archive className="w-4 h-4 mr-2"/>
-                    Pending ({getCount('pending')})
-                    </TabsTrigger>
-                </TabsList>
-                <TabsContent value="current" className="mt-4">
-                    {renderTaskList(filteredTasks)}
-                </TabsContent>
-                <TabsContent value="completed" className="mt-4">
-                    {renderTaskList(filteredTasks)}
-                </TabsContent>
-                <TabsContent value="pending" className="mt-4">
-                    {renderTaskList(filteredTasks)}
-                </TabsContent>
+                
+                {/* Enhanced Search Bar */}
+                <div className="relative">
+                    <div className="absolute inset-0 bg-gradient-to-r from-muted/20 to-accent/10 rounded-2xl" />
+                    <div className="relative flex items-center">
+                        <Search className="absolute left-4 h-4 w-4 text-muted-foreground z-10" />
+                        <Input
+                            placeholder="Search across all tasks..."
+                            className="pl-12 pr-4 h-12 bg-background/80 backdrop-blur-sm border-border/50 rounded-2xl focus:ring-2 focus:ring-primary/20 transition-all duration-200"
+                            value={search}
+                            onChange={(e) => setSearch(e.target.value)}
+                        />
+                    </div>
+                </div>
+            </div>
+
+            {/* Modern Tab Navigation */}
+            <div className="px-4 sm:px-6 py-3 sm:py-4">
+                <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as TaskStatus)} className="w-full">
+                    <TabsList className="grid w-full grid-cols-3 bg-muted/20 p-1 rounded-2xl h-12">
+                        <TabsTrigger 
+                            value="current"
+                            className="rounded-xl data-[state=active]:bg-muted/90 data-[state=active]:shadow-sm data-[state=active]:text-foreground flex items-center gap-2"
+                        >
+                            <Circle className="w-4 h-4" />
+                            <span className="font-medium hidden sm:inline">Current</span>
+                            <span className="bg-primary/10 text-primary px-2 py-0.5 rounded-full text-xs font-bold">
+                                {getCount('current')}
+                            </span>
+                        </TabsTrigger>
+                        <TabsTrigger 
+                            value="completed"
+                            className="rounded-xl data-[state=active]:bg-muted/90 data-[state=active]:shadow-sm data-[state=active]:text-foreground flex items-center gap-2"
+                        >
+                            <CheckCircle2 className="w-4 h-4" />
+                            <span className="font-medium hidden sm:inline">Done</span>
+                            <span className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 px-2 py-0.5 rounded-full text-xs font-bold">
+                                {getCount('completed')}
+                            </span>
+                        </TabsTrigger>
+                        <TabsTrigger 
+                            value="pending"
+                            className="rounded-xl data-[state=active]:bg-muted/90 data-[state=active]:shadow-sm data-[state=active]:text-foreground flex items-center gap-2"
+                        >
+                            <Archive className="w-4 h-4" />
+                            <span className="font-medium hidden sm:inline">Pending</span>
+                            <span className="bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 px-2 py-0.5 rounded-full text-xs font-bold">
+                                {getCount('pending')}
+                            </span>
+                        </TabsTrigger>
+                    </TabsList>
+                    
+                    {/* Scrollable Content Area */}
+                    <div className="mt-4 sm:mt-6 flex-1 overflow-hidden">
+                        <TabsContent value="current" className="h-full overflow-y-auto px-0.5 space-y-1">
+                            <div className="pb-4 sm:pb-6">
+                                {renderTaskList(filteredTasks)}
+                            </div>
+                        </TabsContent>
+                        <TabsContent value="completed" className="h-full overflow-y-auto px-0.5 space-y-1">
+                            <div className="pb-4 sm:pb-6">
+                                {renderTaskList(filteredTasks)}
+                            </div>
+                        </TabsContent>
+                        <TabsContent value="pending" className="h-full overflow-y-auto px-0.5 space-y-1">
+                            <div className="pb-4 sm:pb-6">
+                                {renderTaskList(filteredTasks)}
+                            </div>
+                        </TabsContent>
+                    </div>
                 </Tabs>
-            </CardContent>
-        </Card>
+            </div>
+        </div>
         <DailySummaryDialog
             isOpen={!!summaryData}
             onClose={() => setSummaryData(null)}
