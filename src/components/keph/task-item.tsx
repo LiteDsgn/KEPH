@@ -21,13 +21,38 @@ import { formatRecurrenceDisplay } from '@/lib/recurring-tasks';
 import { Progress } from '../ui/progress';
 
 interface TaskItemProps {
+  categories: string[];
+  onAddCategory: (category: string) => void;
   task: Task;
   onUpdate: (id: string, updates: Partial<Omit<Task, 'id' | 'createdAt'>>) => void;
   onDelete: (id: string) => void;
   onDuplicate: (id: string) => void;
 }
 
-export function TaskItem({ task, onUpdate, onDelete, onDuplicate }: TaskItemProps) {
+// Function to generate consistent colors for categories
+const getCategoryColor = (category: string) => {
+  const colors = [
+    'bg-red-500',
+    'bg-blue-500', 
+    'bg-green-500',
+    'bg-yellow-500',
+    'bg-purple-500',
+    'bg-pink-500',
+    'bg-indigo-500',
+    'bg-orange-500',
+    'bg-teal-500',
+    'bg-cyan-500'
+  ];
+  
+  // Simple hash function to consistently assign colors
+  let hash = 0;
+  for (let i = 0; i < category.length; i++) {
+    hash = category.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  return colors[Math.abs(hash) % colors.length];
+};
+
+export function TaskItem({ task, onUpdate, onDelete, onDuplicate, categories, onAddCategory }: TaskItemProps) {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
   const handleCheck = (checked: boolean) => {
@@ -164,25 +189,31 @@ export function TaskItem({ task, onUpdate, onDelete, onDuplicate }: TaskItemProp
                 ))}
               </div>
             )}
-            {task.dueDate && (
-              <div className="flex items-center pt-1 text-xs text-muted-foreground">
+            <div className="flex flex-col gap-2 pt-2 sm:flex-row sm:items-center sm:justify-between sm:gap-0">
+              <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-3">
+                {task.dueDate && (
                   <div className={cn(
-                      "flex items-center gap-1.5",
-                      task.status !== 'completed' && isPast(task.dueDate) && !isToday(task.dueDate) ? "text-destructive" : ""
+                      "flex items-center gap-1.5 text-xs",
+                      task.status !== 'completed' && isPast(task.dueDate) && !isToday(task.dueDate) ? "text-destructive" : "text-muted-foreground"
                   )}>
                       <CalendarDays className="h-3.5 w-3.5" />
                       <span>{format(task.dueDate, 'MMM d')}</span>
                   </div>
-              </div>
-            )}
-            {task.recurrence && (
-              <div className="flex items-center pt-1 text-xs text-muted-foreground">
-                  <div className="flex items-center gap-1.5">
+                )}
+                {task.recurrence && (
+                  <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
                       <Repeat className="h-3.5 w-3.5" />
                       <span>{formatRecurrenceDisplay(task.recurrence)}</span>
                   </div>
+                )}
               </div>
-            )}
+              {task.category && (
+                <div className="flex items-center gap-1.5 text-xs text-muted-foreground bg-muted/60 px-2 py-0.5 rounded-full self-start sm:self-auto">
+                    <div className={cn("w-2 h-2 rounded-full", getCategoryColor(task.category))} />
+                    <span>{task.category}</span>
+                </div>
+              )}
+            </div>
           </div>
 
           <DropdownMenu>
@@ -242,7 +273,10 @@ export function TaskItem({ task, onUpdate, onDelete, onDuplicate }: TaskItemProp
                         Edit Task
                     </DialogTitle>
                 </DialogHeader>
-                <EditTaskForm 
+                <EditTaskForm
+                    categories={categories}
+                    onAddCategory={onAddCategory}
+
                     task={task} 
                     onSubmit={handleEditSubmit}
                     onCancel={() => setIsEditDialogOpen(false)}

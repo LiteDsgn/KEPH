@@ -26,15 +26,16 @@ const formSchema = z.object({
     .max(200000, { message: 'Transcript cannot exceed 200,000 characters.' }),
   instructions: z
     .string()
-    .max(500, { message: 'Instructions cannot exceed 500 characters.' })
+    .max(1500, { message: 'Instructions cannot exceed 1500 characters.' })
     .optional(),
 });
 
 interface TranscriptToTasksFormProps {
-    onTasksCreated: (tasks: Array<{ title: string; subtasks?: string[] }>) => void;
+    onTasksCreated: (tasks: Array<{ title: string; subtasks?: string[], category: string }>) => void;
+    categories: string[];
 }
 
-export function TranscriptToTasksForm({ onTasksCreated }: TranscriptToTasksFormProps) {
+export function TranscriptToTasksForm({ onTasksCreated, categories }: TranscriptToTasksFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
 
@@ -49,7 +50,7 @@ export function TranscriptToTasksForm({ onTasksCreated }: TranscriptToTasksFormP
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsSubmitting(true);
     try {
-      const result = await transcriptToTasks(values);
+      const result = await transcriptToTasks({...values, categories});
       onTasksCreated(result.tasks);
       form.reset();
     } catch (error) {

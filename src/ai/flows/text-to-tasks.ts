@@ -13,6 +13,7 @@ import {z} from 'genkit';
 
 const TextToTasksInputSchema = z.object({
   description: z.string().describe('A description of the goals for the day.'),
+  categories: z.array(z.string()).describe('A list of available categories to assign to tasks.'),
 });
 export type TextToTasksInput = z.infer<typeof TextToTasksInputSchema>;
 
@@ -27,6 +28,7 @@ const TextToTasksOutputSchema = z.object({
           .describe(
             'A list of smaller, concrete steps or sub-tasks needed to complete the main task.'
           ),
+        category: z.string().describe('The category assigned to the task from the provided list.'),
       })
     )
     .describe('A list of actionable tasks.'),
@@ -44,8 +46,15 @@ const prompt = ai.definePrompt({
   prompt: `You are a personal assistant that is good at creating todo lists from plans.
 
   Create a todo list of actionable tasks from the following description.
+  For each task, you MUST assign a 'category' from the provided list. If no category fits, assign 'General'.
   For each task, provide a concise 'title' and a list of 'subtasks' that break down the main task into smaller steps.
   The title should be a clear action item.
+
+  Available Categories:
+  {{#each categories}}
+  - {{this}}
+  {{/each}}
+  - General
 
   Description:
   {{description}}

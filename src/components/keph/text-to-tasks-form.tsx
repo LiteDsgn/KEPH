@@ -68,14 +68,15 @@ const formSchema = z.object({
   description: z
     .string()
     .min(10, { message: 'Please enter at least 10 characters.' })
-    .max(500, { message: 'Description cannot exceed 500 characters.' }),
+    .max(1500, { message: 'Description cannot exceed 1500 characters.' }),
 });
 
 interface TextToTasksFormProps {
-  onTasksCreated: (tasks: Array<{ title: string; subtasks?: string[] }>) => void;
+  onTasksCreated: (tasks: Array<{ title: string; subtasks?: string[], category: string }>) => void;
+  categories: string[];
 }
 
-export function TextToTasksForm({ onTasksCreated }: TextToTasksFormProps) {
+export function TextToTasksForm({ onTasksCreated, categories }: TextToTasksFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
 
@@ -157,7 +158,7 @@ export function TextToTasksForm({ onTasksCreated }: TextToTasksFormProps) {
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsSubmitting(true);
     try {
-      const result = await textToTasks({ description: values.description });
+      const result = await textToTasks({ description: values.description, categories });
       onTasksCreated(result.tasks);
       form.reset();
     } catch (error) {

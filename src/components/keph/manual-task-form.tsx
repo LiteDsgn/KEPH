@@ -27,6 +27,8 @@ import { generateSubtasks } from '@/ai/flows/generate-subtasks';
 import { RecurrencePanel } from './recurrence-panel';
 import { formatRecurrenceDisplay } from '@/lib/recurring-tasks';
 
+import type { Category } from '@/types/categories';
+
 const formSchema = z.object({
   title: z.string().min(1, 'Task title cannot be empty.'),
   subtasks: z.array(z.object({
@@ -41,16 +43,19 @@ const formSchema = z.object({
   recurrenceInterval: z.number().min(1, 'Interval must be at least 1').default(1),
   recurrenceEndDate: z.date().optional(),
   recurrenceMaxOccurrences: z.number().min(1, 'Max occurrences must be at least 1').optional(),
+      category: z.string().optional(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
 
 interface ManualTaskFormProps {
+  categories: string[];
+  onAddCategory: (category: string) => void;
   onTaskCreated: (taskData: Omit<Task, 'id' | 'status' | 'createdAt' | 'completedAt'>) => void;
   onCancel: () => void;
 }
 
-export function ManualTaskForm({ onTaskCreated, onCancel }: ManualTaskFormProps) {
+export function ManualTaskForm({ onTaskCreated, onCancel, categories, onAddCategory }: ManualTaskFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isAiPanelOpen, setIsAiPanelOpen] = useState(false);
   const [isRecurrencePanelOpen, setIsRecurrencePanelOpen] = useState(false);
@@ -71,6 +76,7 @@ export function ManualTaskForm({ onTaskCreated, onCancel }: ManualTaskFormProps)
       recurrenceInterval: 1,
       recurrenceEndDate: undefined,
       recurrenceMaxOccurrences: undefined,
+      category: 'General',
     },
   });
 
@@ -119,6 +125,7 @@ export function ManualTaskForm({ onTaskCreated, onCancel }: ManualTaskFormProps)
             completed: false,
         })),
         dueDate: values.dueDate,
+        category: values.category,
       };
 
       // Add recurrence configuration if not 'none'
@@ -218,26 +225,54 @@ export function ManualTaskForm({ onTaskCreated, onCancel }: ManualTaskFormProps)
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <div className="flex flex-col md:flex-row gap-x-6">
                 <div className={cn("flex-1 space-y-4 transition-all duration-300", !isAiPanelOpen && !isRecurrencePanelOpen && "w-full")}>
-                    <FormField
-                      control={form.control}
-                      name="title"
-                      render={({ field }: { field: ControllerRenderProps<FormValues, "title"> }) => (
-                          <FormItem>
-                          <FormLabel>Task Title</FormLabel>
-                          <FormControl>
-                              <Input placeholder="e.g., Buy milk" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                          </FormItem>
-                      )}
-                    />
+                    <div className="space-y-2">
+                        <FormField
+                          control={form.control}
+                          name="title"
+                          render={({ field }: { field: ControllerRenderProps<FormValues, "title"> }) => (
+                              <FormItem>
+                              <FormLabel>Task Title</FormLabel>
+                              <FormControl>
+                                  <Input placeholder="e.g., Buy milk" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                              </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={form.control}
+                          name="category"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormControl>
+                                <div className="flex flex-wrap gap-2 pt-1">
+                                  {categories.map((cat) => (
+                                    <Button
+                                      key={cat}
+                                      type="button"
+                                      variant={field.value === cat ? 'default' : 'outline'}
+                                      size="sm"
+                                      onClick={() => field.onChange(cat)}
+                                      className="h-auto px-2 py-1 text-xs"
+                                    >
+                                      {cat}
+                                    </Button>
+                                  ))}
+                                </div>
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                    </div>
                     
-                    <div className="flex gap-2">
+                    <div className="grid grid-cols-2 gap-4">
                       <FormField
                         control={form.control}
                         name="dueDate"
                         render={({ field }: { field: ControllerRenderProps<FormValues, "dueDate"> }) => (
-                          <FormItem className="flex flex-col flex-1">
+                          <FormItem className="flex flex-col min-w-0">
                             <FormLabel>Due Date</FormLabel>
                             <Popover>
                               <PopoverTrigger asChild>
@@ -272,20 +307,20 @@ export function ManualTaskForm({ onTaskCreated, onCancel }: ManualTaskFormProps)
                         )}
                       />
                       
-                      <FormItem className="flex flex-col">
+                      <FormItem className="flex flex-col min-w-0">
                         <FormLabel>Recurrence</FormLabel>
                         <Button
                           type="button"
                           variant={form.watch('recurrenceType') !== 'none' ? "default" : "outline"}
                           className={cn(
-                            "justify-start text-left font-normal min-w-[140px]",
+                            "w-full justify-start text-left font-normal",
                             form.watch('recurrenceType') === 'none' && "text-muted-foreground"
                           )}
                           onClick={() => setIsRecurrencePanelOpen(prev => !prev)}
                         >
                           <Repeat className="mr-2 h-4 w-4" />
                           {form.watch('recurrenceType') !== 'none' ? (
-                            <span className="truncate">
+                            <span className="truncate min-w-0">
                               {formatRecurrenceDisplay({
                                 type: form.watch('recurrenceType'),
                                 interval: form.watch('recurrenceInterval'),

@@ -2,19 +2,39 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useTasks } from '@/hooks/use-tasks';
+import { useCategories } from '@/hooks/use-categories';
 import { TaskList } from '@/components/keph/task-list';
 import { TaskInputArea } from '@/components/keph/task-input-area';
 import { NotificationPanel } from '@/components/keph/notification-panel';
 import { TextToTasksForm } from '@/components/keph/text-to-tasks-form';
 import { TranscriptToTasksForm } from '@/components/keph/transcript-to-tasks-form';
 import { ManualTaskForm } from '@/components/keph/manual-task-form';
+import { CategoryManager } from '@/components/keph/category-manager';
 import { KeyboardShortcutsDialog } from '@/components/keph/keyboard-shortcuts-dialog';
+import { FolderKanban } from 'lucide-react';
 import { BrainCircuit, Bell, FileText, ClipboardList, PlusCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useKeyboardShortcuts } from '@/hooks/use-keyboard-shortcuts';
 import type { Task, Notification } from '@/types';
+
+// Custom hook for responsive sheet side
+function useResponsiveSheetSide() {
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkScreenSize = () => {
+      setIsMobile(window.innerWidth < 640); // sm breakpoint
+    };
+
+    checkScreenSize();
+    window.addEventListener('resize', checkScreenSize);
+    return () => window.removeEventListener('resize', checkScreenSize);
+  }, []);
+
+  return isMobile ? 'bottom' : 'right';
+}
 
 export default function Home() {
   const {
@@ -26,14 +46,19 @@ export default function Home() {
     duplicateTask,
     search,
     setSearch,
+
     overdueTasks,
     updateMultipleTasks,
     clearOverdueTasks,
   } = useTasks();
+  const { categories, addCategory, editCategory, removeCategory, canEditCategory, canRemoveCategory } = useCategories();
+  const sheetSide = useResponsiveSheetSide();
 
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [activeModal, setActiveModal] = useState<'manual' | 'text' | 'transcript' | null>(null);
+  const [showCategoryManager, setShowCategoryManager] = useState(false);
   const [showKeyboardShortcuts, setShowKeyboardShortcuts] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -144,7 +169,7 @@ export default function Home() {
     setActiveModal(null);
   };
 
-  const handleTasksCreated = (tasks: Array<{ title: string; subtasks?: string[] }>) => {
+  const handleTasksCreated = (tasks: Array<{ title: string; subtasks?: string[], category: string }>) => {
     addTasks(tasks);
     setActiveModal(null);
   };
@@ -197,6 +222,7 @@ export default function Home() {
                   <h1 className="text-2xl font-bold font-headline text-primary tracking-tight">KEPH</h1>
                   <p className="text-sm text-muted-foreground font-medium">Intelligent Productivity</p>
                 </div>
+
               </div>
               
               <div className="flex items-center gap-3">
@@ -204,6 +230,11 @@ export default function Home() {
                   <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
                   <span className="text-xs font-medium text-muted-foreground">AI Ready</span>
                 </div>
+
+                <Button variant="ghost" size="icon" onClick={() => setShowCategoryManager(true)} className="rounded-full transition-all duration-200 hover:bg-accent/50">
+                  <FolderKanban className="h-5 w-5" />
+                  <span className="sr-only">Manage Categories</span>
+                </Button>
                 
                 <SheetTrigger asChild>
                   <Button variant="ghost" size="icon" className="relative hover:bg-accent/50 rounded-full transition-all duration-200">
@@ -225,27 +256,32 @@ export default function Home() {
           {/* Full-Width Task List */}
           <div className="bg-card/50 backdrop-blur-sm border border-border/30 rounded-2xl sm:rounded-3xl overflow-hidden shadow-xl min-h-[calc(100vh-160px)] sm:min-h-[calc(100vh-200px)]">
             <TaskList
-                tasks={tasks}
+                categories={categories}
+                onAddCategory={addCategory}
+                tasks={tasks.filter(task => selectedCategory === 'all' || task.category === selectedCategory)}
                 onUpdateTask={updateTask}
                 onDeleteTask={deleteTask}
                 onDuplicateTask={duplicateTask}
                 search={search}
                 setSearch={setSearch}
+                selectedCategory={selectedCategory}
+                setSelectedCategory={setSelectedCategory}
               />
           </div>
         </main>
         
-        {/* Enhanced Notification Panel */}
-        <SheetContent className="w-full sm:max-w-lg p-0 flex flex-col border-0 bg-gradient-to-br from-background/95 to-muted/50 backdrop-blur-xl shadow-2xl">
-          <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-accent/5" />
+        {/* Enhanced Notification Panel - Bottom drawer on mobile, side panel on desktop */}
+        <SheetContent className={`w-full sm:max-w-lg p-0 flex flex-col border-0 bg-gradient-to-br from-background/95 to-muted/50 backdrop-blur-xl shadow-2xl ${sheetSide === 'bottom' ? 'h-[70vh] rounded-t-3xl' : 'h-full rounded-none'}`} side={sheetSide}>
+          <div className={`absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-accent/5 ${sheetSide === 'bottom' ? 'rounded-t-3xl' : 'rounded-none'}`} />
           <div className="relative flex flex-col h-full">
-            <div className="p-6 pb-4">
+            <div className={`${sheetSide === 'bottom' ? 'px-4 py-6' : 'p-6'} pb-4`}>
+              {sheetSide === 'bottom' && <div className="w-12 h-1 bg-muted-foreground/30 rounded-full mx-auto mb-4" />}
               <div className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-border/30 to-transparent" />
               <h2 className="text-xl font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
                 Notifications
               </h2>
             </div>
-            <div className="p-6 pt-4 overflow-y-auto flex-1">
+            <div className={`${sheetSide === 'bottom' ? 'px-4 py-4' : 'p-6'} pt-4 overflow-y-auto flex-1`}>
               <NotificationPanel
                 notifications={notifications}
                 onDismissNotification={dismissNotification}
@@ -266,6 +302,50 @@ export default function Home() {
           open={showKeyboardShortcuts} 
           onOpenChange={setShowKeyboardShortcuts} 
         />
+
+        <Sheet open={showCategoryManager} onOpenChange={setShowCategoryManager}>
+          <SheetContent className={`w-full sm:max-w-lg p-0 flex flex-col border-0 bg-gradient-to-br from-background/95 to-muted/50 backdrop-blur-xl shadow-2xl ${sheetSide === 'bottom' ? 'h-[80vh] rounded-t-3xl' : 'h-full rounded-none'}`} side={sheetSide}>
+            <div className={`absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-accent/5 ${sheetSide === 'bottom' ? 'rounded-t-3xl' : 'rounded-none'}`} />
+            <div className="relative flex flex-col h-full">
+              <div className={`${sheetSide === 'bottom' ? 'px-4 py-6' : 'p-6'} pb-4`}>
+                {sheetSide === 'bottom' && <div className="w-12 h-1 bg-muted-foreground/30 rounded-full mx-auto mb-4" />}
+                <div className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-border/30 to-transparent" />
+                <h2 className="text-xl font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
+                  Manage Categories
+                </h2>
+              </div>
+              <div className={`${sheetSide === 'bottom' ? 'px-4 py-4' : 'p-6'} pt-4 overflow-y-auto flex-1`}>
+                <CategoryManager 
+                  categories={categories} 
+                  onAddCategory={addCategory}
+                  onEditCategory={(oldName, newName) => {
+                     // Update category name in tasks
+                     const tasksToUpdate = tasks.filter(task => task.category === oldName);
+                     tasksToUpdate.forEach(task => {
+                       updateTask(task.id, { category: newName });
+                     });
+                     
+                     // Update categories list
+                     editCategory(oldName, newName);
+                   }}
+                  onArchiveCategory={(categoryName) => {
+                     // Remove category from categories list
+                     removeCategory(categoryName);
+                     
+                     // Update tasks to remove the category (set to empty string)
+                     const tasksToUpdate = tasks.filter(task => task.category === categoryName);
+                     tasksToUpdate.forEach(task => {
+                       updateTask(task.id, { category: '' });
+                     });
+                   }}
+                  canEditCategory={canEditCategory}
+                  canRemoveCategory={canRemoveCategory}
+                  tasks={tasks}
+                />
+              </div>
+            </div>
+          </SheetContent>
+        </Sheet>
         
         {/* Contextual Bottom Menu Bar */}
         <div ref={dropdownRef} className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-50">
@@ -283,6 +363,8 @@ export default function Home() {
                       <ManualTaskForm
                         onTaskCreated={handleManualTaskCreated}
                         onCancel={() => setActiveModal(null)}
+                        categories={categories}
+                        onAddCategory={addCategory}
                       />
                     </div>
                   )}
@@ -292,7 +374,7 @@ export default function Home() {
                       <h3 className="text-lg font-semibold mb-4 bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
                         Text to Tasks
                       </h3>
-                      <TextToTasksForm onTasksCreated={handleTasksCreated} />
+                      <TextToTasksForm onTasksCreated={handleTasksCreated} categories={categories} />
                     </div>
                   )}
                   
@@ -301,7 +383,7 @@ export default function Home() {
                       <h3 className="text-lg font-semibold mb-4 bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
                         Transcript to Tasks
                       </h3>
-                      <TranscriptToTasksForm onTasksCreated={handleTasksCreated} />
+                      <TranscriptToTasksForm onTasksCreated={handleTasksCreated} categories={categories} />
                     </div>
                   )}
                 </div>

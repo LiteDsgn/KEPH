@@ -6,18 +6,29 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { TaskItem } from './task-item';
 import { Search, Circle, CheckCircle2, Archive } from 'lucide-react';
 import { isToday, isYesterday, format } from 'date-fns';
 import { DailySummaryDialog } from './daily-summary-dialog';
 
 interface TaskListProps {
+  categories: string[];
+  onAddCategory: (category: string) => void;
   tasks: Task[];
   onUpdateTask: (id: string, updates: Partial<Omit<Task, 'id' | 'createdAt'>>) => void;
   onDeleteTask: (id: string) => void;
   onDuplicateTask: (id: string) => void;
   search: string;
   setSearch: (search: string) => void;
+  selectedCategory: string;
+  setSelectedCategory: (category: string) => void;
 }
 
 const formatDateHeading = (dateKey: string): string => {
@@ -33,7 +44,7 @@ const formatDateHeading = (dateKey: string): string => {
     return format(date, 'MMMM d, yyyy');
 };
 
-export function TaskList({ tasks, onUpdateTask, onDeleteTask, onDuplicateTask, search, setSearch }: TaskListProps) {
+export function TaskList({ tasks, onUpdateTask, onDeleteTask, onDuplicateTask, search, setSearch, categories, onAddCategory, selectedCategory, setSelectedCategory }: TaskListProps) {
   const [activeTab, setActiveTab] = useState<TaskStatus>('current');
   const [summaryData, setSummaryData] = useState<{ tasks: Task[], dateKey: string } | null>(null);
 
@@ -124,6 +135,8 @@ export function TaskList({ tasks, onUpdateTask, onDeleteTask, onDuplicateTask, s
                     <div className="space-y-3 sm:space-y-4">
                         {sortedGroupTasks.map(task => (
                             <TaskItem
+                                categories={categories}
+                                onAddCategory={onAddCategory}
                                 key={task.id}
                                 task={task}
                                 onUpdate={onUpdateTask}
@@ -160,24 +173,34 @@ export function TaskList({ tasks, onUpdateTask, onDeleteTask, onDuplicateTask, s
         <div className="h-full flex flex-col">
             {/* Modern Header with Search */}
             <div className="p-4 sm:p-6 pb-3 sm:pb-4 border-b border-border/30">
-                <div className="flex items-center gap-3 mb-4">
-                    <div className="w-8 h-8 bg-gradient-to-br from-primary/20 to-accent/20 rounded-lg flex items-center justify-center">
-                        <CheckCircle2 className="w-4 h-4 text-primary" />
-                    </div>
-                    <h2 className="text-xl font-semibold text-foreground">Task Management</h2>
-                </div>
+
                 
-                {/* Enhanced Search Bar */}
-                <div className="relative">
-                    <div className="absolute inset-0 bg-gradient-to-r from-muted/20 to-accent/10 rounded-2xl" />
-                    <div className="relative flex items-center">
-                        <Search className="absolute left-4 h-4 w-4 text-muted-foreground z-10" />
-                        <Input
-                            placeholder="Search across all tasks..."
-                            className="pl-12 pr-4 h-12 bg-background/80 backdrop-blur-sm border-border/50 rounded-2xl focus:ring-2 focus:ring-primary/20 transition-all duration-200"
-                            value={search}
-                            onChange={(e) => setSearch(e.target.value)}
-                        />
+                {/* Enhanced Search Bar & Filter */}
+                <div className="flex items-center gap-3">
+                    <div className="relative flex-1">
+                        <div className="absolute inset-0 bg-gradient-to-r from-muted/20 to-accent/10 rounded-2xl" />
+                        <div className="relative flex items-center">
+                            <Search className="absolute left-4 h-4 w-4 text-muted-foreground z-10" />
+                            <Input
+                                placeholder="Search across all tasks..."
+                                className="w-full pl-12 pr-4 h-12 bg-background/80 backdrop-blur-sm border-border/50 rounded-2xl focus:ring-2 focus:ring-primary/20 transition-all duration-200"
+                                value={search}
+                                onChange={(e) => setSearch(e.target.value)}
+                            />
+                        </div>
+                    </div>
+                    <div className="relative">
+                        <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                          <SelectTrigger className="h-12 w-full sm:w-[180px] bg-background/80 backdrop-blur-sm border border-border/50 rounded-2xl px-3 text-sm focus:ring-2 focus:ring-primary/20 transition-all duration-200">
+                            <SelectValue placeholder="All Categories" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="all">All Categories</SelectItem>
+                            {categories.map(category => (
+                              <SelectItem key={category} value={category}>{category}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                     </div>
                 </div>
             </div>

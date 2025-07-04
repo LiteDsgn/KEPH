@@ -33,6 +33,7 @@ export interface Task {
   recurrence?: RecurrenceConfig;
   parentRecurringTaskId?: string; // Links to the original recurring task
   isRecurringInstance?: boolean;
+  category?: string;
 }
 
 export type NotificationType = 'overdue-tasks';

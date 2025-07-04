@@ -8,6 +8,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **"General" Category System**: Added "General" as the first, uneditable, unarchivable default category for all task creation
+- **Category Protection**: Implemented helper functions `canEditCategory` and `canRemoveCategory` to prevent modification of protected categories
+- **Category Migration**: Added automatic migration logic to ensure existing users get the "General" category in their localStorage
+- **Enhanced Category Management**: Improved category ordering to always keep "General" as the first option
 - TypeScript strict type checking with comprehensive type annotations
 - SpeechRecognition API type definitions for voice input functionality
 - Explicit type annotations for React Hook Form components
@@ -36,8 +40,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Subtle border styling for task item cards
 - VisuallyHidden component for improved accessibility compliance
 - Enhanced dropdown menu visibility with backdrop blur and stronger shadows
+- Responsive panel animations with custom `useResponsiveSheetSide()` hook
+- Colored dot indicators for task categories with consistent color generation
+- Bottom drawer panels for mobile devices with drag handles
+- Right-side panel animations for tablet and desktop devices
 
 ### Changed
+- **Increased Character Limits**: Expanded description field character limit from 500 to 1500 characters in text-to-tasks and transcript-to-tasks forms
+- **Improved AI Category Assignment**: Enhanced AI prompts to be more insistent on assigning categories to generated tasks with "General" as fallback
+- **Default Category for Manual Tasks**: Changed default category from "Personal" to "General" for new manual task creation
 - Enhanced active tab styling with improved visual distinction
 - Optimized mobile layout padding for better space utilization
 - Removed unnecessary wrapper divs and padding from form components
@@ -46,8 +57,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Reduced dropdown menu border opacity from 100% to 20% for subtler appearance
 - Enhanced dropdown menu background with 95% opacity and backdrop blur for better content separation
 - Upgraded dropdown menu shadow from medium to extra-large for improved visibility
+- Reorganized task item layout to display category, date, and recurrence horizontally
+- Repositioned task details with date/recurrence on left and category on far right
+- Implemented responsive task detail stacking (vertical on mobile, horizontal on larger screens)
+- Updated notification and category management panels to use conditional side animations
+- Modified panel styling to dynamically adjust height and border radius based on screen size
 
 ### Fixed
+- **Category Visibility Issue**: Fixed "General" category not appearing in UI for existing users by implementing proper localStorage migration
+- **Category Ordering**: Ensured "General" category always appears first in all category lists and selections
+- **AI Category Assignment**: Resolved issue where AI-generated tasks were created without categories by enhancing prompts and adding fallback logic
 - **TypeScript Errors**: Resolved all react-hook-form import issues by reinstalling package and adding proper type imports
 - **Implicit Type Errors**: Fixed 'any' type errors in form field parameters and event handlers
 - **SpeechRecognition Types**: Added comprehensive type definitions for browser speech recognition API
@@ -61,6 +80,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Resolved DialogContent accessibility error by restructuring DialogTitle placement
 - Fixed Daily Summary Dialog layout to ensure DialogDescription appears directly under DialogTitle
 - Improved dialog accessibility compliance with proper title and description hierarchy
+- **Responsive Panel Behavior**: Improved panel animations to slide from right on web/tablet and bottom on mobile for optimal UX
+- **Task Layout Optimization**: Enhanced task item spacing and organization for better readability across all screen sizes
 
 ### Technical Implementation
 - Next.js 15.3.3 with App Router and Turbopack

@@ -27,7 +27,10 @@ import { format } from 'date-fns';
 import { RecurrencePanel } from './recurrence-panel';
 import { formatRecurrenceDisplay } from '@/lib/recurring-tasks';
 
+
+
 const formSchema = z.object({
+  category: z.string().optional(),
   title: z.string().min(1, 'Task title cannot be empty.'),
   subtasks: z.array(z.object({
     id: z.string(),
@@ -49,12 +52,14 @@ const formSchema = z.object({
 type FormValues = z.infer<typeof formSchema>;
 
 interface EditTaskFormProps {
+  categories: string[];
+  onAddCategory: (category: string) => void;
   task: Task;
   onSubmit: (values: Partial<Omit<Task, 'id' | 'createdAt'>>) => Promise<void>;
   onCancel: () => void;
 }
 
-export function EditTaskForm({ task, onSubmit, onCancel }: EditTaskFormProps) {
+export function EditTaskForm({ task, onSubmit, onCancel, categories, onAddCategory }: EditTaskFormProps) {
   const [isAiPanelOpen, setIsAiPanelOpen] = useState(false);
   const [isRecurrencePanelOpen, setIsRecurrencePanelOpen] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -74,6 +79,7 @@ export function EditTaskForm({ task, onSubmit, onCancel }: EditTaskFormProps) {
       recurrenceInterval: task.recurrence?.interval || 1,
       recurrenceEndDate: task.recurrence?.endDate,
       recurrenceMaxOccurrences: task.recurrence?.maxOccurrences,
+      category: task.category || 'Personal',
     },
   });
 
@@ -115,6 +121,7 @@ export function EditTaskForm({ task, onSubmit, onCancel }: EditTaskFormProps) {
       notes: values.notes,
       urls: values.urls,
       dueDate: values.dueDate,
+      category: values.category,
     };
 
     if (values.recurrenceType !== 'none') {
@@ -188,19 +195,46 @@ export function EditTaskForm({ task, onSubmit, onCancel }: EditTaskFormProps) {
       <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
         <div className="flex flex-col md:flex-row gap-x-6">
           <div className={cn("flex-1 space-y-4 transition-all duration-300", !isAiPanelOpen && !isRecurrencePanelOpen && "w-full")}>
-            <FormField
-              control={form.control}
-              name="title"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Task Title</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Enter task title" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            <div className="space-y-2">
+                <FormField
+                  control={form.control}
+                  name="title"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Task Title</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Enter task title" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="category"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormControl>
+                        <div className="flex flex-wrap gap-2 pt-1">
+                          {categories.map((cat) => (
+                            <Button
+                              key={cat}
+                              type="button"
+                              variant={field.value === cat ? 'default' : 'outline'}
+                              size="sm"
+                              onClick={() => field.onChange(cat)}
+                              className="h-auto px-2 py-1 text-xs"
+                            >
+                              {cat}
+                            </Button>
+                          ))}
+                        </div>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+            </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField

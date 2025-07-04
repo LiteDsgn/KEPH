@@ -14,6 +14,7 @@ import {z} from 'genkit';
 const TranscriptToTasksInputSchema = z.object({
   transcript: z.string().describe('The meeting transcript to extract tasks from.'),
   instructions: z.string().optional().describe('Optional instructions for the AI on how to process the transcript.'),
+  categories: z.array(z.string()).describe('A list of available categories to assign to tasks.'),
 });
 export type TranscriptToTasksInput = z.infer<typeof TranscriptToTasksInputSchema>;
 
@@ -28,6 +29,7 @@ const TranscriptToTasksOutputSchema = z.object({
           .describe(
             'A list of smaller, concrete steps or sub-tasks needed to complete the main task.'
           ),
+        category: z.string().describe('The category assigned to the task from the provided list.'),
       })
     )
     .describe('A list of actionable tasks.'),
@@ -45,7 +47,14 @@ const prompt = ai.definePrompt({
   prompt: `You are an AI assistant that extracts actionable tasks from a meeting transcript.
 
   Given the following meeting transcript, identify the tasks that need to be done.
-  For each task, provide a concise 'title' and a list of 'subtasks' that break down the main task. The title should be a clear summary of the action item.
+  For each task, you MUST assign a 'category' from the provided list. If no category fits, assign 'General'.
+  For each task, provide a concise 'title', a list of 'subtasks' that break down the main task, and assign a 'category' from the provided list. The title should be a clear summary of the action item.
+
+  Available Categories:
+  {{#each categories}}
+  - {{this}}
+  {{/each}}
+  - General
 
   {{#if instructions}}
   You MUST follow these instructions precisely when creating the tasks:
