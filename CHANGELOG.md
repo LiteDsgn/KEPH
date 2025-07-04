@@ -8,6 +8,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- TypeScript strict type checking with comprehensive type annotations
+- SpeechRecognition API type definitions for voice input functionality
+- Explicit type annotations for React Hook Form components
+- Enhanced code quality with proper TypeScript compliance
 - Initial project setup with Next.js 15.3.3 and TypeScript
 - AI-powered task generation using Google Genkit AI
 - Text-to-Tasks conversion functionality
@@ -44,6 +48,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Upgraded dropdown menu shadow from medium to extra-large for improved visibility
 
 ### Fixed
+- **TypeScript Errors**: Resolved all react-hook-form import issues by reinstalling package and adding proper type imports
+- **Implicit Type Errors**: Fixed 'any' type errors in form field parameters and event handlers
+- **SpeechRecognition Types**: Added comprehensive type definitions for browser speech recognition API
+- **Form Component Types**: Added explicit ControllerRenderProps and FieldPath type annotations
+- **Modal Force-Closing Issue**: Fixed recurrence panel modal closing unexpectedly when selecting options by enhancing click detection logic in page.tsx
+- **Compilation Errors**: Resolved EditTaskForm component export issues and syntax errors in edit-task-form.tsx
+- **Border Styling Consistency**: Applied 10% opacity borders to recurrence panel dividers, dropdowns, and calendar popovers for consistent design
+- **Dividing Line Opacity**: Updated manual task form dividing line opacity to 30% for better visual hierarchy
 - Corrected padding discrepancy between left and right sides in task management area
 - Removed jarring transitions from tab state changes for smoother UX
 - Resolved DialogContent accessibility error by restructuring DialogTitle placement

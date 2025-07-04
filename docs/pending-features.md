@@ -9,7 +9,7 @@ Excellent question! Now that we've streamlined the UI and implemented a solid ke
 - **Concept:** Add a feature that uses AI to automatically prioritize tasks based on due dates, keywords (e.g., "urgent," "important"), and user-defined rules.
 - **Benefit:** Saves users time from manually sorting tasks and helps them focus on what matters most.
 
-### 2. **Recurring Tasks**
+### 2. **Recurring Tasks [DONE]**
 
 - **Concept:** Allow users to set tasks to repeat on a schedule (e.g., daily, weekly, monthly).
 - **Benefit:** Automates the creation of routine tasks, reducing manual entry and ensuring nothing is forgotten.

@@ -23,8 +23,9 @@ import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { Calendar } from '../ui/calendar';
 import { Separator } from '../ui/separator';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { generateSubtasks } from '@/ai/flows/generate-subtasks';
+import { RecurrencePanel } from './recurrence-panel';
+import { formatRecurrenceDisplay } from '@/lib/recurring-tasks';
 
 const formSchema = z.object({
   title: z.string().min(1, 'Task title cannot be empty.'),
@@ -52,6 +53,7 @@ interface ManualTaskFormProps {
 export function ManualTaskForm({ onTaskCreated, onCancel }: ManualTaskFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isAiPanelOpen, setIsAiPanelOpen] = useState(false);
+  const [isRecurrencePanelOpen, setIsRecurrencePanelOpen] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [generationPrompt, setGenerationPrompt] = useState('');
   const [suggestedSubtasks, setSuggestedSubtasks] = useState<string[]>([]);
@@ -215,7 +217,7 @@ export function ManualTaskForm({ onTaskCreated, onCancel }: ManualTaskFormProps)
         <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <div className="flex flex-col md:flex-row gap-x-6">
-                <div className={cn("flex-1 space-y-4 transition-all duration-300", !isAiPanelOpen && "w-full")}>
+                <div className={cn("flex-1 space-y-4 transition-all duration-300", !isAiPanelOpen && !isRecurrencePanelOpen && "w-full")}>
                     <FormField
                       control={form.control}
                       name="title"
@@ -230,167 +232,75 @@ export function ManualTaskForm({ onTaskCreated, onCancel }: ManualTaskFormProps)
                       )}
                     />
                     
-                    <FormField
-                      control={form.control}
-                      name="dueDate"
-                      render={({ field }: { field: ControllerRenderProps<FormValues, "dueDate"> }) => (
-                        <FormItem className="flex flex-col">
-                          <FormLabel>Due Date</FormLabel>
-                          <Popover>
-                            <PopoverTrigger asChild>
-                              <FormControl>
-                                <Button
-                                  variant={"outline"}
-                                  className={cn(
-                                    "w-full justify-start text-left font-normal",
-                                    !field.value && "text-muted-foreground"
-                                  )}
-                                >
-                                  <CalendarIcon className="mr-2 h-4 w-4" />
-                                  {field.value ? (
-                                    format(field.value, "PPP")
-                                  ) : (
-                                    <span>Pick a date</span>
-                                  )}
-                                </Button>
-                              </FormControl>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-auto p-0" align="start">
-                              <Calendar
-                                mode="single"
-                                selected={field.value}
-                                onSelect={field.onChange}
-                                initialFocus
-                              />
-                            </PopoverContent>
-                          </Popover>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    {/* Recurrence Configuration */}
-                    <div className="space-y-4 p-4 border rounded-lg bg-muted/20">
-                      <div className="flex items-center gap-2">
-                        <Repeat className="h-4 w-4 text-muted-foreground" />
-                        <FormLabel className="text-sm font-medium">Recurrence (Optional)</FormLabel>
-                      </div>
-                      
+                    <div className="flex gap-2">
                       <FormField
-                control={form.control}
-                name="recurrenceType"
-                render={({ field }: { field: ControllerRenderProps<FormValues, "recurrenceType"> }) => (
-                  <FormItem>
-                    <FormLabel>Repeat</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select recurrence" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="none">No repeat</SelectItem>
-                        <SelectItem value="daily">Daily</SelectItem>
-                        <SelectItem value="weekly">Weekly</SelectItem>
-                        <SelectItem value="monthly">Monthly</SelectItem>
-                        <SelectItem value="yearly">Yearly</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-                      {form.watch('recurrenceType') !== 'none' && (
-                        <>
-                          <FormField
-                            control={form.control}
-                            name="recurrenceInterval"
-                            render={({ field }: { field: ControllerRenderProps<FormValues, "recurrenceInterval"> }) => (
-                              <FormItem>
-                                <FormLabel>
-                                  Every {field.value || 1} {form.watch('recurrenceType')}{field.value > 1 ? 's' : ''}
-                                </FormLabel>
+                        control={form.control}
+                        name="dueDate"
+                        render={({ field }: { field: ControllerRenderProps<FormValues, "dueDate"> }) => (
+                          <FormItem className="flex flex-col flex-1">
+                            <FormLabel>Due Date</FormLabel>
+                            <Popover>
+                              <PopoverTrigger asChild>
                                 <FormControl>
-                                  <Input
-                                    type="number"
-                                    min="1"
-                                    max="365"
-                                    {...field}
-                                    onChange={(e) => field.onChange(parseInt(e.target.value) || 1)}
-                                  />
+                                  <Button
+                                    variant={"outline"}
+                                    className={cn(
+                                      "w-full justify-start text-left font-normal",
+                                      !field.value && "text-muted-foreground"
+                                    )}
+                                  >
+                                    <CalendarIcon className="mr-2 h-4 w-4" />
+                                    {field.value ? (
+                                      format(field.value, "PPP")
+                                    ) : (
+                                      <span>Pick a date</span>
+                                    )}
+                                  </Button>
                                 </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <FormField
-                              control={form.control}
-                              name="recurrenceEndDate"
-                              render={({ field }: { field: ControllerRenderProps<FormValues, "recurrenceEndDate"> }) => (
-                                <FormItem className="flex flex-col">
-                                  <FormLabel>End Date (Optional)</FormLabel>
-                                  <Popover>
-                                    <PopoverTrigger asChild>
-                                      <FormControl>
-                                        <Button
-                                          variant={"outline"}
-                                          className={cn(
-                                            "w-full justify-start text-left font-normal",
-                                            !field.value && "text-muted-foreground"
-                                          )}
-                                        >
-                                          <CalendarIcon className="mr-2 h-4 w-4" />
-                                          {field.value ? (
-                                            format(field.value, "PPP")
-                                          ) : (
-                                            <span>No end date</span>
-                                          )}
-                                        </Button>
-                                      </FormControl>
-                                    </PopoverTrigger>
-                                    <PopoverContent className="w-auto p-0" align="start">
-                                      <Calendar
-                                        mode="single"
-                                        selected={field.value}
-                                        onSelect={field.onChange}
-                                        initialFocus
-                                        disabled={(date) => date < new Date()}
-                                      />
-                                    </PopoverContent>
-                                  </Popover>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
-
-                            <FormField
-                              control={form.control}
-                              name="recurrenceMaxOccurrences"
-                              render={({ field }: { field: ControllerRenderProps<FormValues, "recurrenceMaxOccurrences"> }) => (
-                                <FormItem>
-                                  <FormLabel>Max Occurrences (Optional)</FormLabel>
-                                  <FormControl>
-                                    <Input
-                                      type="number"
-                                      min="1"
-                                      max="1000"
-                                      placeholder="e.g., 10"
-                                      {...field}
-                                      onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : undefined)}
-                                      value={field.value || ''}
-                                    />
-                                  </FormControl>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
-                          </div>
-                        </>
-                      )}
+                              </PopoverTrigger>
+                              <PopoverContent className="w-auto p-0" align="start">
+                                <Calendar
+                                  mode="single"
+                                  selected={field.value}
+                                  onSelect={field.onChange}
+                                  initialFocus
+                                />
+                              </PopoverContent>
+                            </Popover>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormItem className="flex flex-col">
+                        <FormLabel>Recurrence</FormLabel>
+                        <Button
+                          type="button"
+                          variant={form.watch('recurrenceType') !== 'none' ? "default" : "outline"}
+                          className={cn(
+                            "justify-start text-left font-normal min-w-[140px]",
+                            form.watch('recurrenceType') === 'none' && "text-muted-foreground"
+                          )}
+                          onClick={() => setIsRecurrencePanelOpen(prev => !prev)}
+                        >
+                          <Repeat className="mr-2 h-4 w-4" />
+                          {form.watch('recurrenceType') !== 'none' ? (
+                            <span className="truncate">
+                              {formatRecurrenceDisplay({
+                                type: form.watch('recurrenceType'),
+                                interval: form.watch('recurrenceInterval'),
+                                endDate: form.watch('recurrenceEndDate'),
+                                maxOccurrences: form.watch('recurrenceMaxOccurrences'),
+                              })}
+                            </span>
+                          ) : (
+                            <span>No repeat</span>
+                          )}
+                        </Button>
+                      </FormItem>
                     </div>
+
+
 
                     <FormItem>
                         <FormLabel>Subtasks (Optional)</FormLabel>
@@ -489,8 +399,17 @@ export function ManualTaskForm({ onTaskCreated, onCancel }: ManualTaskFormProps)
                     </FormItem>
                 </div>
 
+                {isRecurrencePanelOpen && (
+                    <div className="w-full md:w-1/2 lg:w-2/5 md:border-l border-border/95 md:pl-6 space-y-4 mt-6 md:mt-0">
+                        <RecurrencePanel
+                            form={form}
+                            onClose={() => setIsRecurrencePanelOpen(false)}
+                        />
+                    </div>
+                )}
+
                 {isAiPanelOpen && (
-                    <div className="w-full md:w-1/2 lg:w-2/5 md:border-l md:pl-6 space-y-4 mt-6 md:mt-0">
+            <div className="w-full md:w-1/2 lg:w-2/5 md:border-l border-border/95 md:pl-6 space-y-4 mt-6 md:mt-0">
                         <div className="space-y-2">
                             <div className="flex justify-between items-center">
                                 <FormLabel>Generate Subtasks with AI</FormLabel>

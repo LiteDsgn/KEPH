@@ -152,7 +152,21 @@ export default function Home() {
   // Click outside to close dropdown
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+      const target = event.target as Node;
+      
+      // Check if click is outside the dropdown container
+      if (dropdownRef.current && !dropdownRef.current.contains(target)) {
+        // Check if the click is on a Select dropdown or its content
+        const selectDropdown = document.querySelector('[data-radix-popper-content-wrapper]');
+        const selectTrigger = (target as Element)?.closest('[data-radix-select-trigger]');
+        const selectContent = (target as Element)?.closest('[data-radix-select-content]');
+        const selectItem = (target as Element)?.closest('[data-radix-select-item]');
+        
+        // Don't close if clicking on Select components
+        if (selectDropdown?.contains(target) || selectTrigger || selectContent || selectItem) {
+          return;
+        }
+        
         setActiveModal(null);
       }
     };
