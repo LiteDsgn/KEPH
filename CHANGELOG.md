@@ -12,6 +12,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Category Protection**: Implemented helper functions `canEditCategory` and `canRemoveCategory` to prevent modification of protected categories
 - **Category Migration**: Added automatic migration logic to ensure existing users get the "General" category in their localStorage
 - **Enhanced Category Management**: Improved category ordering to always keep "General" as the first option
+- **Custom Scrollbar Styling**: Implemented cross-browser compatible auto-hiding scrollbars with global CSS solution
+- **Form Height Management**: Added viewport-based height constraints to prevent forms from growing too tall
+- **Smooth Scrolling**: Enhanced user experience with smooth scroll behavior in form sections
 - TypeScript strict type checking with comprehensive type annotations
 - SpeechRecognition API type definitions for voice input functionality
 - Explicit type annotations for React Hook Form components
@@ -51,6 +54,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Increased Character Limits**: Expanded description field character limit from 500 to 1500 characters in text-to-tasks and transcript-to-tasks forms
 - **Improved AI Category Assignment**: Enhanced AI prompts to be more insistent on assigning categories to generated tasks with "General" as fallback
 - **Default Category for Manual Tasks**: Changed default category from "Personal" to "General" for new manual task creation
+- **Form Body Padding**: Optimized form padding from `p-4` to `p-2` for more compact layout in task forms
+- **Scrollbar Design**: Replaced complex Tailwind arbitrary values with reusable `custom-scrollbar` CSS class for maintainability
 - Enhanced active tab styling with improved visual distinction
 - Optimized mobile layout padding for better space utilization
 - Removed unnecessary wrapper divs and padding from form components
@@ -69,6 +74,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Category Visibility Issue**: Fixed "General" category not appearing in UI for existing users by implementing proper localStorage migration
 - **Category Ordering**: Ensured "General" category always appears first in all category lists and selections
 - **AI Category Assignment**: Resolved issue where AI-generated tasks were created without categories by enhancing prompts and adding fallback logic
+- **Cross-Browser Scrollbar Compatibility**: Resolved scrollbar visibility issues in Chrome by implementing comprehensive CSS solution with Webkit and Firefox support
+- **Form Height Overflow**: Prevented task forms from growing too tall by implementing `max-height` constraints (60vh for manual tasks, 70vh for edit tasks)
+- **Layout Shifts**: Eliminated scrollbar-induced layout shifts with auto-hiding, thin scrollbar implementation
 - **TypeScript Errors**: Resolved all react-hook-form import issues by reinstalling package and adding proper type imports
 - **Implicit Type Errors**: Fixed 'any' type errors in form field parameters and event handlers
 - **SpeechRecognition Types**: Added comprehensive type definitions for browser speech recognition API
