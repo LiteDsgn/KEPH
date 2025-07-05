@@ -32,7 +32,7 @@ const formSchema = z.object({
 
 interface TranscriptToTasksFormProps {
     onTasksCreated: (tasks: Array<{ title: string; subtasks?: string[], category: string }>) => void;
-    categories: string[];
+    categories?: string[];
 }
 
 export function TranscriptToTasksForm({ onTasksCreated, categories }: TranscriptToTasksFormProps) {
@@ -50,7 +50,7 @@ export function TranscriptToTasksForm({ onTasksCreated, categories }: Transcript
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsSubmitting(true);
     try {
-      const result = await transcriptToTasks({...values, categories});
+      const result = await transcriptToTasks({...values, categories: categories || []});
       onTasksCreated(result.tasks);
       form.reset();
     } catch (error) {

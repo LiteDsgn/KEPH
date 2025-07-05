@@ -17,7 +17,7 @@ import {
 } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, PlusCircle, X, CalendarIcon, Sparkles, GripVertical, Repeat } from 'lucide-react';
-import type { Task, RecurrenceType } from '@/types';
+import type { Task, TaskStatus, RecurrenceType } from '@/types';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
@@ -49,9 +49,9 @@ const formSchema = z.object({
 type FormValues = z.infer<typeof formSchema>;
 
 interface ManualTaskFormProps {
-  categories: string[];
-  onAddCategory: (category: string) => void;
-  onTaskCreated: (taskData: Omit<Task, 'id' | 'status' | 'createdAt' | 'completedAt'>) => void;
+  categories?: string[];
+  onAddCategory?: (category: string) => void;
+  onTaskCreated: (taskData: Omit<Task, 'id'>) => void;
   onCancel: () => void;
 }
 
@@ -112,20 +112,23 @@ export function ManualTaskForm({ onTaskCreated, onCancel, categories, onAddCateg
   async function onSubmit(values: FormValues) {
     setIsSubmitting(true);
     try {
-      const taskData: Omit<Task, 'id' | 'status' | 'createdAt' | 'completedAt'> = {
+      const taskData: Omit<Task, 'id'> = {
         title: values.title,
         notes: values.notes,
+        status: 'pending' as TaskStatus,
+        createdAt: new Date(),
+        dueDate: values.dueDate || new Date(),
+        completedAt: undefined,
+        category: values.category,
         urls: values.urls?.map(u => ({
             id: crypto.randomUUID(),
             value: u.value,
-        })),
+        })) || [],
         subtasks: values.subtasks?.map(st => ({
             id: crypto.randomUUID(),
             title: st.title,
             completed: false,
-        })),
-        dueDate: values.dueDate,
-        category: values.category,
+        })) || [],
       };
 
       // Add recurrence configuration if not 'none'
@@ -256,7 +259,7 @@ export function ManualTaskForm({ onTaskCreated, onCancel, categories, onAddCateg
                             <FormItem>
                               <FormControl>
                                 <div className="flex flex-wrap gap-2 pt-1">
-                                  {categories.map((cat) => (
+                                  {(categories || []).map((cat) => (
                                     <Button
                                       key={cat}
                                       type="button"

@@ -73,7 +73,7 @@ const formSchema = z.object({
 
 interface TextToTasksFormProps {
   onTasksCreated: (tasks: Array<{ title: string; subtasks?: string[], category: string }>) => void;
-  categories: string[];
+  categories?: string[];
 }
 
 export function TextToTasksForm({ onTasksCreated, categories }: TextToTasksFormProps) {
@@ -158,7 +158,7 @@ export function TextToTasksForm({ onTasksCreated, categories }: TextToTasksFormP
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsSubmitting(true);
     try {
-      const result = await textToTasks({ description: values.description, categories });
+      const result = await textToTasks({ description: values.description, categories: categories || [] });
       onTasksCreated(result.tasks);
       form.reset();
     } catch (error) {

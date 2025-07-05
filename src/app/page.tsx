@@ -1,8 +1,20 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { useTasks } from '@/hooks/use-tasks';
-import { useCategories } from '@/hooks/use-categories';
+import { useSupabaseTasks } from '@/hooks/use-supabase-tasks';
+import { useSupabaseCategories } from '@/hooks/use-supabase-categories';
+import { useAuth } from '@/hooks/use-auth';
+
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { LogOut, User, Settings } from 'lucide-react';
 import { TaskList } from '@/components/keph/task-list';
 import { TaskInputArea } from '@/components/keph/task-input-area';
 import { NotificationPanel } from '@/components/keph/notification-panel';
@@ -47,12 +59,12 @@ export default function Home() {
     duplicateTask,
     search,
     setSearch,
-
     overdueTasks,
     updateMultipleTasks,
     clearOverdueTasks,
-  } = useTasks();
-  const { categories, addCategory, editCategory, removeCategory, canEditCategory, canRemoveCategory } = useCategories();
+  } = useSupabaseTasks();
+  const { categories, addCategory, editCategory, removeCategory, canEditCategory, canRemoveCategory } = useSupabaseCategories();
+  const { user, signOut } = useAuth();
   const sheetSide = useResponsiveSheetSide();
 
   const [notifications, setNotifications] = useState<Notification[]>([]);
@@ -178,7 +190,11 @@ export default function Home() {
   };
 
   const handleManualTaskCreated = (taskData: Omit<Task, 'id' | 'status' | 'createdAt'>) => {
-    addTask(taskData);
+    addTask({
+      ...taskData,
+      status: 'current' as const,
+      createdAt: new Date()
+    });
     setActiveModal(null);
   };
 
@@ -222,8 +238,8 @@ export default function Home() {
   return (
     <Sheet>
       <div className="min-h-screen bg-background font-body">
-        {/* Modern Avant-Garde Header with Floating Navigation */}
-        <header className="sticky top-0 z-50 backdrop-blur-xl bg-background/80 border-b border-border/50">
+        {/* Main Navigation Header */}
+        <header className="sticky top-0 z-40 backdrop-blur-xl bg-background/80 border-b border-border/50">
           <div className="container mx-auto px-4 sm:px-6 py-3 sm:py-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-4">
@@ -259,6 +275,48 @@ export default function Home() {
                     )}
                   </Button>
                 </SheetTrigger>
+                
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon" className="relative hover:bg-accent/50 rounded-full transition-all duration-200">
+                      <Avatar className="h-8 w-8">
+                        <AvatarImage src={user?.user_metadata?.avatar_url} alt={user?.email || 'User'} />
+                        <AvatarFallback className="bg-gradient-to-br from-primary/20 to-accent/20 text-primary font-semibold">
+                          {user?.email?.charAt(0).toUpperCase() || 'U'}
+                        </AvatarFallback>
+                      </Avatar>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-56 bg-card/95 backdrop-blur-xl border-border/50">
+                    <DropdownMenuLabel className="font-normal">
+                      <div className="flex flex-col space-y-1">
+                        <p className="text-sm font-medium leading-none">
+                          {user?.user_metadata?.full_name || 'User'}
+                        </p>
+                        <p className="text-xs leading-none text-muted-foreground">
+                          {user?.email}
+                        </p>
+                      </div>
+                    </DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem className="cursor-pointer">
+                      <User className="mr-2 h-4 w-4" />
+                      <span>Profile</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem className="cursor-pointer">
+                      <Settings className="mr-2 h-4 w-4" />
+                      <span>Settings</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem 
+                      className="cursor-pointer text-destructive focus:text-destructive"
+                      onClick={() => signOut()}
+                    >
+                      <LogOut className="mr-2 h-4 w-4" />
+                      <span>Log out</span>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
             </div>
           </div>

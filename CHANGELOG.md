@@ -10,7 +10,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - **"General" Category System**: Added "General" as the first, uneditable, unarchivable default category for all task creation
 - **Category Protection**: Implemented helper functions `canEditCategory` and `canRemoveCategory` to prevent modification of protected categories
-- **Category Migration**: Added automatic migration logic to ensure existing users get the "General" category in their localStorage
 - **Enhanced Category Management**: Improved category ordering to always keep "General" as the first option
 - **Custom Scrollbar Styling**: Implemented cross-browser compatible auto-hiding scrollbars with global CSS solution
 - **Form Height Management**: Added viewport-based height constraints to prevent forms from growing too tall
@@ -71,7 +70,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Modified panel styling to dynamically adjust height and border radius based on screen size
 
 ### Fixed
-- **Category Visibility Issue**: Fixed "General" category not appearing in UI for existing users by implementing proper localStorage migration
+- **Category Visibility Issue**: Fixed "General" category not appearing in UI for users
 - **Category Ordering**: Ensured "General" category always appears first in all category lists and selections
 - **AI Category Assignment**: Resolved issue where AI-generated tasks were created without categories by enhancing prompts and adding fallback logic
 - **Cross-Browser Scrollbar Compatibility**: Resolved scrollbar visibility issues in Chrome by implementing comprehensive CSS solution with Webkit and Firefox support

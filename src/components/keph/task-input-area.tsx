@@ -20,13 +20,13 @@ import {
 
 interface TaskInputAreaProps {
   onTasksCreated: (tasks: Array<{ title: string; subtasks?: string[] }>) => void;
-  onTaskCreated: (taskData: Omit<Task, 'id' | 'status' | 'createdAt'>) => void;
+  onTaskCreated: (taskData: Omit<Task, 'id'>) => void;
 }
 
 export function TaskInputArea({ onTasksCreated, onTaskCreated }: TaskInputAreaProps) {
   const [isManualFormOpen, setIsManualFormOpen] = useState(false);
 
-  const handleManualTaskCreated = (taskData: Omit<Task, 'id' | 'status' | 'createdAt'>) => {
+  const handleManualTaskCreated = (taskData: Omit<Task, 'id'>) => {
     onTaskCreated(taskData);
     setIsManualFormOpen(false);
   };
