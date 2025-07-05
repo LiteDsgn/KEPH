@@ -268,15 +268,12 @@ export function TaskItem({ task, onUpdate, onDelete, onDuplicate, categories, on
         <DialogContent className="sm:max-w-4xl border-0 bg-gradient-to-br from-background/95 to-muted/50 backdrop-blur-xl shadow-2xl">
             <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-accent/5 rounded-lg" />
             <div className="relative">
-                <DialogHeader className="pb-6">
-                    <DialogTitle className="text-2xl font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
-                        Edit Task
-                    </DialogTitle>
+                <DialogHeader className="sr-only">
+                    <DialogTitle>Edit Task</DialogTitle>
                 </DialogHeader>
                 <EditTaskForm
                     categories={categories}
                     onAddCategory={onAddCategory}
-
                     task={task} 
                     onSubmit={handleEditSubmit}
                     onCancel={() => setIsEditDialogOpen(false)}

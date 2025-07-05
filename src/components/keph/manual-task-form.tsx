@@ -220,9 +220,18 @@ export function ManualTaskForm({ onTaskCreated, onCancel, categories, onAddCateg
   };
 
   return (
-    <div className="space-y-4 pt-2">
-        <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+    <div className="space-y-4">
+        {/* Header */}
+        <div className="pt-2">
+            <h3 className="text-lg font-semibold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
+                Create New Task
+            </h3>
+        </div>
+        
+        {/* Form Body */}
+        <div className="max-h-[60vh] overflow-y-auto p-2 scroll-smooth custom-scrollbar">
+            <Form {...form}>
+            <form id="manual-task-form" onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <div className="flex flex-col md:flex-row gap-x-6">
                 <div className={cn("flex-1 space-y-4 transition-all duration-300", !isAiPanelOpen && !isRecurrencePanelOpen && "w-full")}>
                     <div className="space-y-2">
@@ -339,7 +348,7 @@ export function ManualTaskForm({ onTaskCreated, onCancel, categories, onAddCateg
 
                     <FormItem>
                         <FormLabel>Subtasks (Optional)</FormLabel>
-                        <div className="space-y-2 max-h-48 overflow-y-auto p-2">
+                        <div className="space-y-2 max-h-48 overflow-y-auto p-2 custom-scrollbar">
                             {subtaskFields.map((field: any, index: number) => (
                                 <div 
                                     key={field.id}
@@ -404,7 +413,7 @@ export function ManualTaskForm({ onTaskCreated, onCancel, categories, onAddCateg
                     
                     <FormItem>
                         <FormLabel>URLs (Optional)</FormLabel>
-                        <div className="space-y-2 max-h-48 overflow-y-auto p-2">
+                        <div className="space-y-2 max-h-48 overflow-y-auto p-2 custom-scrollbar">
                             {urlFields.map((field: any, index: number) => (
                                 <div key={field.id} className="flex items-center gap-2">
                                     <FormField
@@ -487,17 +496,20 @@ export function ManualTaskForm({ onTaskCreated, onCancel, categories, onAddCateg
                 )}
             </div>
 
-            <div className="flex justify-end gap-2 pt-4">
-              <Button type="button" variant="ghost" onClick={onCancel} disabled={isSubmitting || isGenerating}>
-                  Cancel
-              </Button>
-              <Button type="submit" disabled={isSubmitting || isGenerating}>
-                {(isSubmitting || isGenerating) ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <PlusCircle className="mr-2 h-4 w-4" />}
+            </form>
+            </Form>
+        </div>
+        
+        {/* Footer */}
+        <div className="flex justify-end gap-2 pt-4">
+            <Button type="button" variant="ghost" onClick={onCancel} disabled={isSubmitting || isGenerating}>
+                Cancel
+            </Button>
+            <Button type="submit" form="manual-task-form" disabled={isSubmitting || isGenerating}>
+                {(isSubmitting || isGenerating) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 Add Task
-              </Button>
-            </div>
-        </form>
-        </Form>
+            </Button>
+        </div>
     </div>
   );
 }

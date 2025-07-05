@@ -389,17 +389,12 @@ export default function Home() {
                 <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-accent/5 rounded-2xl" />
                 <div className="relative">
                   {activeModal === 'manual' && (
-                    <div>
-                      <h3 className="text-lg font-semibold mb-4 bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
-                        Create New Task
-                      </h3>
-                      <ManualTaskForm
-                        onTaskCreated={handleManualTaskCreated}
-                        onCancel={() => setActiveModal(null)}
-                        categories={categories}
-                        onAddCategory={addCategory}
-                      />
-                    </div>
+                    <ManualTaskForm
+                      onTaskCreated={handleManualTaskCreated}
+                      onCancel={() => setActiveModal(null)}
+                      categories={categories}
+                      onAddCategory={addCategory}
+                    />
                   )}
                   
                   {activeModal === 'text' && (

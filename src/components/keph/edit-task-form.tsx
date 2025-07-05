@@ -191,8 +191,18 @@ export function EditTaskForm({ task, onSubmit, onCancel, categories, onAddCatego
   };
 
   return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+    <div className="space-y-4">
+      {/* Header */}
+      <div>
+        <h3 className="text-lg font-semibold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
+          Edit Task
+        </h3>
+      </div>
+      
+      {/* Form Body */}
+      <div className="max-h-[70vh] overflow-y-auto p-2 scroll-smooth custom-scrollbar">
+        <Form {...form}>
+        <form id="edit-task-form" onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
         <div className="flex flex-col md:flex-row gap-x-6">
           <div className={cn("flex-1 space-y-4 transition-all duration-300", !isAiPanelOpen && !isRecurrencePanelOpen && "w-full")}>
             <div className="space-y-2">
@@ -306,7 +316,7 @@ export function EditTaskForm({ task, onSubmit, onCancel, categories, onAddCatego
 
             <FormItem>
               <FormLabel>Subtasks</FormLabel>
-              <div className="space-y-2 max-h-48 overflow-y-auto p-2">
+              <div className="space-y-2 max-h-48 overflow-y-auto p-2 custom-scrollbar">
                 {subtaskFields.map((field: any, index: number) => (
                   <div 
                     key={field.id} 
@@ -371,7 +381,7 @@ export function EditTaskForm({ task, onSubmit, onCancel, categories, onAddCatego
 
             <FormItem>
               <FormLabel>URLs</FormLabel>
-              <div className="space-y-2 max-h-48 overflow-y-auto p-2">
+              <div className="space-y-2 max-h-48 overflow-y-auto p-2 custom-scrollbar">
                 {urlFields.map((field: any, index: number) => (
                   <div key={field.id} className="flex items-center gap-2">
                     <FormField
@@ -437,7 +447,7 @@ export function EditTaskForm({ task, onSubmit, onCancel, categories, onAddCatego
                   <div className="space-y-2">
                     <FormLabel>AI Suggestions</FormLabel>
                     <p className="text-xs text-muted-foreground">Click the plus icon to add a subtask.</p>
-                    <div className="space-y-2 max-h-40 overflow-y-auto rounded-md border p-2">
+                    <div className="space-y-2 max-h-40 overflow-y-auto rounded-md border p-2 custom-scrollbar">
                       {suggestedSubtasks.map((suggestion, index) => (
                         <div key={index} className="flex items-center justify-between gap-2 p-2 bg-muted/50 rounded-md">
                           <span className="text-sm flex-1">{suggestion}</span>
@@ -453,17 +463,20 @@ export function EditTaskForm({ task, onSubmit, onCancel, categories, onAddCatego
             </div>
           )}
         </div>
-
-        <div className="flex justify-end gap-2 pt-4">
-          <Button type="button" variant="ghost" onClick={onCancel} disabled={isSubmitting || isGenerating}>
-            Cancel
-          </Button>
-          <Button type="submit" disabled={isSubmitting || isGenerating}>
-            {(isSubmitting || isGenerating) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Save Changes
-          </Button>
-        </div>
-      </form>
-    </Form>
+        </form>
+        </Form>
+      </div>
+      
+      {/* Footer */}
+      <div className="flex justify-end gap-2 pt-4">
+        <Button type="button" variant="ghost" onClick={onCancel} disabled={isSubmitting || isGenerating}>
+          Cancel
+        </Button>
+        <Button type="submit" form="edit-task-form" disabled={isSubmitting || isGenerating}>
+          {(isSubmitting || isGenerating) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+          Save Changes
+        </Button>
+      </div>
+    </div>
   );
 }
