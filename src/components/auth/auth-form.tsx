@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Loader2, Mail, Lock, User, Chrome } from 'lucide-react';
+import { Loader2, Mail, Lock, User, Chrome, CheckCircle, ArrowLeft } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 
 interface AuthFormProps {
@@ -25,6 +25,8 @@ export function AuthForm({ onSuccess }: AuthFormProps) {
   });
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [activeTab, setActiveTab] = useState('signin');
+  const [showEmailConfirmation, setShowEmailConfirmation] = useState(false);
+  const [signupEmail, setSignupEmail] = useState('');
 
   const validateForm = (isSignUp: boolean = false) => {
     const errors: Record<string, string> = {};
@@ -89,8 +91,8 @@ export function AuthForm({ onSuccess }: AuthFormProps) {
     const { error } = await signUp(formData.email, formData.password, formData.fullName);
     
     if (!error) {
-      // Show success message or redirect
-      alert('Please check your email to confirm your account!');
+      setSignupEmail(formData.email);
+      setShowEmailConfirmation(true);
     }
   };
 
@@ -117,6 +119,68 @@ export function AuthForm({ onSuccess }: AuthFormProps) {
     setActiveTab(value);
     resetForm();
   };
+
+  const handleBackToSignIn = () => {
+    setShowEmailConfirmation(false);
+    setActiveTab('signin');
+    resetForm();
+  };
+
+  // Show email confirmation screen after successful signup
+  if (showEmailConfirmation) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-[#0D0D0D] p-4">
+        <Card className="w-full max-w-md border border-border/20">
+          <CardHeader className="space-y-1 text-center">
+            <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-green-100 dark:bg-green-900">
+              <CheckCircle className="h-6 w-6 text-green-600 dark:text-green-400" />
+            </div>
+            <CardTitle className="text-2xl font-bold">Check Your Email</CardTitle>
+            <CardDescription>
+              We've sent a confirmation link to your email address
+            </CardDescription>
+          </CardHeader>
+          
+          <CardContent className="space-y-4">
+            <div className="rounded-lg bg-muted p-4 text-center">
+              <Mail className="mx-auto mb-2 h-8 w-8 text-muted-foreground" />
+              <p className="text-sm font-medium">{signupEmail}</p>
+            </div>
+            
+            <div className="space-y-3 text-sm text-muted-foreground">
+              <p className="text-center">
+                Please check your email and click the confirmation link to activate your account.
+              </p>
+              
+              <div className="space-y-2">
+                <p className="font-medium">Next steps:</p>
+                <ul className="space-y-1 text-xs">
+                  <li>• Check your inbox for an email from KEPH</li>
+                  <li>• Click the confirmation link in the email</li>
+                  <li>• Return here to sign in to your account</li>
+                </ul>
+              </div>
+              
+              <p className="text-xs text-center">
+                Didn't receive the email? Check your spam folder or contact support.
+              </p>
+            </div>
+          </CardContent>
+          
+          <CardFooter>
+            <Button 
+              variant="outline" 
+              className="w-full" 
+              onClick={handleBackToSignIn}
+            >
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Back to Sign In
+            </Button>
+          </CardFooter>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-[#0D0D0D] p-4">

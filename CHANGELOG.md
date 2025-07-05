@@ -8,6 +8,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Email confirmation screen with professional UI after user signup
+- Dedicated "Check Your Email" page with clear instructions and navigation
+- Back to Sign In functionality from email confirmation screen
+- OAuth callback route handler for Google authentication (`/auth/callback`)
+- Email confirmation callback route handler (`/auth/confirm`)
+- Authentication error page with user-friendly error messages
+- Automatic user record creation in database upon successful OAuth/email verification
 - **"General" Category System**: Added "General" as the first, uneditable, unarchivable default category for all task creation
 - **Category Protection**: Implemented helper functions `canEditCategory` and `canRemoveCategory` to prevent modification of protected categories
 - **Enhanced Category Management**: Improved category ordering to always keep "General" as the first option
@@ -51,6 +58,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - **Authentication Background**: Updated login/signup page background from blue-to-indigo gradient to solid dark color (#0D0D0D) for a more modern, minimalist appearance
+- Enhanced user experience with better visual feedback during signup process
+- Improved authentication flow with dedicated confirmation states
+- Migrated to modern @supabase/ssr package for server-side authentication
 - **Increased Character Limits**: Expanded description field character limit from 500 to 1500 characters in text-to-tasks and transcript-to-tasks forms
 - **Improved AI Category Assignment**: Enhanced AI prompts to be more insistent on assigning categories to generated tasks with "General" as fallback
 - **Default Category for Manual Tasks**: Changed default category from "Personal" to "General" for new manual task creation
@@ -71,6 +81,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Modified panel styling to dynamically adjust height and border radius based on screen size
 
 ### Fixed
+- OAuth authentication flow now properly handles callbacks and redirects
+- Email verification links now work correctly with proper token handling
+- Authentication errors are now displayed in a user-friendly manner
 - **Category Visibility Issue**: Fixed "General" category not appearing in UI for users
 - **Category Ordering**: Ensured "General" category always appears first in all category lists and selections
 - **AI Category Assignment**: Resolved issue where AI-generated tasks were created without categories by enhancing prompts and adding fallback logic
