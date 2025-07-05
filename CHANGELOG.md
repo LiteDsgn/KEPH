@@ -50,6 +50,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Enhanced Command Palette UX**: Added smooth enter/exit animations with custom cubic-bezier easing and opacity transitions
 
 ### Changed
+- **Authentication Background**: Updated login/signup page background from blue-to-indigo gradient to solid dark color (#0D0D0D) for a more modern, minimalist appearance
 - **Increased Character Limits**: Expanded description field character limit from 500 to 1500 characters in text-to-tasks and transcript-to-tasks forms
 - **Improved AI Category Assignment**: Enhanced AI prompts to be more insistent on assigning categories to generated tasks with "General" as fallback
 - **Default Category for Manual Tasks**: Changed default category from "Personal" to "General" for new manual task creation
