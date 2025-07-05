@@ -35,6 +35,7 @@ const shortcutGroups: ShortcutGroup[] = [
   {
     title: 'General',
     shortcuts: [
+      { key: 'K', ctrlKey: true, metaKey: true, description: 'Open command palette' },
       { key: 'H', description: 'Show keyboard shortcuts' },
       { key: 'Esc', description: 'Close dialog/menu' },
       { key: '/', description: 'Focus search' },

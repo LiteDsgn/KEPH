@@ -11,6 +11,7 @@ import { TranscriptToTasksForm } from '@/components/keph/transcript-to-tasks-for
 import { ManualTaskForm } from '@/components/keph/manual-task-form';
 import { CategoryManager } from '@/components/keph/category-manager';
 import { KeyboardShortcutsDialog } from '@/components/keph/keyboard-shortcuts-dialog';
+import { CommandPalette } from '@/components/keph/command-palette';
 import { FolderKanban } from 'lucide-react';
 import { BrainCircuit, Bell, FileText, ClipboardList, PlusCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -58,6 +59,7 @@ export default function Home() {
   const [activeModal, setActiveModal] = useState<'manual' | 'text' | 'transcript' | null>(null);
   const [showCategoryManager, setShowCategoryManager] = useState(false);
   const [showKeyboardShortcuts, setShowKeyboardShortcuts] = useState(false);
+  const [showCommandPalette, setShowCommandPalette] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -139,19 +141,30 @@ export default function Home() {
     updateNotificationsAfterAction(taskIds);
   };
 
+  // Helper functions for command palette
+  const handleOpenNotifications = () => {
+    const sheetTrigger = document.querySelector('[data-sheet-trigger]') as HTMLButtonElement;
+    if (sheetTrigger) {
+      sheetTrigger.click();
+    }
+  };
+
+  const handleFocusSearch = () => {
+    const searchInput = document.querySelector('input[placeholder*="Search"]') as HTMLInputElement;
+    if (searchInput) {
+      searchInput.focus();
+      searchInput.select();
+    }
+  };
+
   // Keyboard shortcuts configuration
   useKeyboardShortcuts({
     'Escape': () => setActiveModal(null),
     'KeyN': () => setActiveModal(activeModal === 'manual' ? null : 'manual'),
     'KeyT': () => setActiveModal(activeModal === 'text' ? null : 'text'),
     'KeyR': () => setActiveModal(activeModal === 'transcript' ? null : 'transcript'),
-    'Slash': () => {
-      const searchInput = document.querySelector('input[placeholder*="Search"]') as HTMLInputElement;
-      if (searchInput) {
-        searchInput.focus();
-        searchInput.select();
-      }
-    },
+    'KeyK': () => setShowCommandPalette(true),
+    'Slash': () => handleFocusSearch(),
     'KeyH': () => setShowKeyboardShortcuts(true),
   });
   
@@ -237,7 +250,7 @@ export default function Home() {
                 </Button>
                 
                 <SheetTrigger asChild>
-                  <Button variant="ghost" size="icon" className="relative hover:bg-accent/50 rounded-full transition-all duration-200">
+                  <Button variant="ghost" size="icon" className="relative hover:bg-accent/50 rounded-full transition-all duration-200" data-sheet-trigger>
                     <Bell className="h-5 w-5" />
                     {notifications.length > 0 && (
                       <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-destructive text-xs text-destructive-foreground font-bold animate-bounce">
@@ -301,6 +314,26 @@ export default function Home() {
         <KeyboardShortcutsDialog 
           open={showKeyboardShortcuts} 
           onOpenChange={setShowKeyboardShortcuts} 
+        />
+
+        {/* Command Palette */}
+        <CommandPalette
+          open={showCommandPalette}
+          onOpenChange={setShowCommandPalette}
+          onCreateManualTask={() => setActiveModal('manual')}
+          onCreateTextTask={() => setActiveModal('text')}
+          onCreateTranscriptTask={() => setActiveModal('transcript')}
+          onOpenCategoryManager={() => setShowCategoryManager(true)}
+          onOpenNotifications={handleOpenNotifications}
+          onOpenKeyboardShortcuts={() => setShowKeyboardShortcuts(true)}
+          onFocusSearch={handleFocusSearch}
+          tasks={tasks}
+          onUpdateTask={updateTask}
+          onDeleteTask={deleteTask}
+          onDuplicateTask={duplicateTask}
+          selectedCategory={selectedCategory}
+          onSetSelectedCategory={setSelectedCategory}
+          categories={categories}
         />
 
         <Sheet open={showCategoryManager} onOpenChange={setShowCategoryManager}>

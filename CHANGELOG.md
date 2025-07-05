@@ -44,6 +44,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Colored dot indicators for task categories with consistent color generation
 - Bottom drawer panels for mobile devices with drag handles
 - Right-side panel animations for tablet and desktop devices
+- **Custom Command Palette Animation**: Implemented specialized vertical slide animation that moves purely upward from due south position
+- **Enhanced Command Palette UX**: Added smooth enter/exit animations with custom cubic-bezier easing and opacity transitions
 
 ### Changed
 - **Increased Character Limits**: Expanded description field character limit from 500 to 1500 characters in text-to-tasks and transcript-to-tasks forms
