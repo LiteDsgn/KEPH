@@ -222,7 +222,7 @@ export function ManualTaskForm({ onTaskCreated, onCancel, categories, onAddCateg
   return (
     <div className="space-y-4">
         {/* Header */}
-        <div className="pt-2">
+        <div className="">
             <h3 className="text-lg font-semibold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
                 Create New Task
             </h3>
