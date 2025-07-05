@@ -5,6 +5,7 @@ import {
   Dialog,
   DialogPortal,
   DialogOverlay,
+  DialogTitle,
 } from '@/components/ui/dialog';
 import * as DialogPrimitive from '@radix-ui/react-dialog';
 import { Input } from '@/components/ui/input';
@@ -28,6 +29,7 @@ import {
   Filter,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { VisuallyHidden } from '@/components/ui/visually-hidden';
 import type { Task } from '@/types';
 
 interface Command {
@@ -331,6 +333,9 @@ export function CommandPalette({
       <DialogPortal>
         <DialogOverlay />
         <DialogPrimitive.Content className="fixed bottom-32 left-1/2 z-50 w-full max-w-2xl -translate-x-1/2 border-0 bg-gradient-to-br from-background/95 to-muted/50 backdrop-blur-xl shadow-2xl data-[state=open]:animate-command-palette-enter data-[state=closed]:animate-command-palette-exit sm:rounded-lg flex flex-col-reverse">
+          <VisuallyHidden>
+            <DialogTitle>Command Palette</DialogTitle>
+          </VisuallyHidden>
           <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-accent/5 rounded-lg" />
           <div className="relative flex flex-col-reverse">
           {/* Search Input - Now at bottom */}
