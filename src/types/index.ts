@@ -47,3 +47,32 @@ export interface Notification {
   read: boolean;
   data: any;
 }
+
+// Component interfaces for homepage
+export interface FeatureCardProps {
+  icon?: React.ElementType;
+  title: string;
+  description: string;
+  image?: string;
+}
+
+export interface PricingCardProps {
+  plan: string;
+  price: string;
+  description: string;
+  features: string[];
+  popular?: boolean;
+  cta: string;
+}
+
+export interface FAQItemProps {
+  question: string;
+  answer: string;
+}
+
+export interface Testimonial {
+  id: number;
+  text: string;
+  author: string;
+  role: string;
+}
