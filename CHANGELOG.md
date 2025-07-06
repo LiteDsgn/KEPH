@@ -15,6 +15,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Email confirmation callback route handler (`/auth/confirm`)
 - Authentication error page with user-friendly error messages
 - Automatic user record creation in database upon successful OAuth/email verification
+- **Route-Specific Authentication**: Implemented dashboard-specific `AuthGuard` in `/dashboard/layout.tsx`
+- **Public Page Access**: Enabled guest access to landing page and public routes
+- **Improved User Flow**: Updated all authentication buttons to redirect to `/dashboard` instead of `/auth`
 - **"General" Category System**: Added "General" as the first, uneditable, unarchivable default category for all task creation
 - **Category Protection**: Implemented helper functions `canEditCategory` and `canRemoveCategory` to prevent modification of protected categories
 - **Enhanced Category Management**: Improved category ordering to always keep "General" as the first option
@@ -26,7 +29,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Explicit type annotations for React Hook Form components
 - Enhanced code quality with proper TypeScript compliance
 - Initial project setup with Next.js 15.3.3 and TypeScript
-- AI-powered task generation using Google Genkit AI
+- AI-powered task generation using Google Generative AI (Gemini)
 - Text-to-Tasks conversion functionality
 - Transcript-to-Tasks processing for meeting notes
 - Voice-to-Tasks with speech recognition
@@ -43,7 +46,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Modern UI with Tailwind CSS and ShadCN UI components
 - Responsive design with mobile-first approach
 - Dark theme support
-- Firebase integration for data persistence
+- Supabase integration for secure cloud storage and real-time synchronization
 - Comprehensive project documentation and blueprint
 - Progressive gradient overlay for contextual menu focus
 - Subtle border styling for task item cards
@@ -84,6 +87,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - OAuth authentication flow now properly handles callbacks and redirects
 - Email verification links now work correctly with proper token handling
 - Authentication errors are now displayed in a user-friendly manner
+- **Global AuthGuard Issue**: Removed global `AuthGuard` from `layout.tsx` that was preventing guest access to public pages
+- **Authentication Routing**: Fixed authentication flow to allow public landing page access while protecting dashboard routes
+- **Redundant Auth Checks**: Removed duplicate authentication logic from dashboard page components
+- **Build Prerendering Error**: Fixed auth-error page build failure by wrapping useSearchParams() in Suspense boundary
 - **Category Visibility Issue**: Fixed "General" category not appearing in UI for users
 - **Category Ordering**: Ensured "General" category always appears first in all category lists and selections
 - **AI Category Assignment**: Resolved issue where AI-generated tasks were created without categories by enhancing prompts and adding fallback logic
@@ -109,8 +116,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Technical Implementation
 - Next.js 15.3.3 with App Router and Turbopack
 - React 18 with TypeScript 5
-- Google Genkit AI 1.13.0 for AI flows
-- Firebase 11.9.1 for backend services
+- Google Generative AI (Gemini) for AI-powered task generation
+- Supabase for database, authentication, and real-time synchronization
 - Tailwind CSS 3.4 with custom design system
 - Radix UI components for accessibility
 - React Hook Form with Zod validation
@@ -118,11 +125,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - ESLint and PostCSS configuration
 
 ### Project Structure
-- Organized AI flows in `/src/ai/flows/`
 - Component architecture with `/src/components/keph/` and `/src/components/ui/`
-- Custom hooks in `/src/hooks/`
-- Type definitions in `/src/types/`
-- Utility functions in `/src/lib/`
+- Custom hooks in `/src/hooks/` including Supabase integration
+- Type definitions in `/src/types/` with database schemas
+- Utility functions in `/src/lib/` including Supabase client
+- Authentication and real-time data management
 
 ### Documentation
 - Comprehensive project blueprint

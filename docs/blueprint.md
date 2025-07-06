@@ -2,14 +2,16 @@
 
 ## 🎯 Project Overview
 
-KEPH is an AI-powered productivity application that streamlines task management by converting various inputs (text, transcripts, voice) into structured, actionable to-do lists. Built with modern web technologies and powered by Google's Genkit AI framework.
+KEPH is an AI-powered productivity application that streamlines task management by converting various inputs (text, transcripts, voice) into structured, actionable to-do lists. Built with modern web technologies and powered by Google Generative AI (Gemini) with Supabase for secure cloud storage and real-time synchronization.
 
 ## 🚀 Tech Stack
 
 - **Frontend**: Next.js 15.3.3, React 18, TypeScript 5
 - **UI Framework**: Tailwind CSS 3.4, ShadCN UI, Radix UI components
-- **AI Integration**: Google Genkit AI 1.13.0, Google AI
-- **Backend**: Firebase 11.9.1
+- **Database**: Supabase (PostgreSQL)
+- **Authentication**: Supabase Auth (Email + Google OAuth)
+- **AI Integration**: Google Generative AI (Gemini)
+- **Real-time**: Supabase Realtime
 - **Development**: Turbopack, ESLint, PostCSS
 - **Additional**: React Hook Form, Zod validation, Lucide React icons
 
@@ -64,43 +66,45 @@ KEPH is an AI-powered productivity application that streamlines task management 
 ### Frontend Structure
 ```
 src/
-├── ai/                 # AI integration and flows
-│   ├── flows/         # Genkit AI flow definitions
-│   ├── genkit.ts      # AI configuration
-│   └── dev.ts         # Development AI server
 ├── app/               # Next.js app router
 ├── components/        # React components
 │   ├── keph/         # Application-specific components
 │   └── ui/           # Reusable UI components
 ├── hooks/            # Custom React hooks
+│   ├── use-auth.ts   # Supabase authentication
+│   └── use-supabase-tasks.ts # Task management with Supabase
 ├── lib/              # Utility functions
+│   ├── supabase.ts   # Supabase client configuration
+│   └── ai.ts         # Google AI integration
 └── types/            # TypeScript type definitions
+    └── database.ts   # Supabase database types
 ```
 
-### AI Flows
-- **generate-subtasks.ts**: Complex task breakdown
-- **text-to-tasks.ts**: Plain text processing
-- **transcript-to-tasks.ts**: Meeting transcript analysis
-- **voice-to-tasks.ts**: Speech processing pipeline
+### AI Integration
+- **Google Generative AI (Gemini)**: Direct integration for task generation
+- **Text-to-Tasks**: Plain text processing with AI
+- **Transcript-to-Tasks**: Meeting transcript analysis
+- **Voice-to-Tasks**: Speech-to-text with AI processing
+- **Subtask Generation**: AI-powered task breakdown
 
 ### Key Components
 - **TaskInputArea**: Multi-modal input interface
 - **TaskList**: Dynamic task rendering with filtering
 - **VoiceRecorder**: Speech capture and processing
 - **DailySummaryDialog**: Progress analytics display
-- **NotificationPanel**: Real-time alert system
+- **AuthGuard**: Authentication protection for routes
+- **CategoryManager**: Task categorization system
 
 ## 🔧 Development Setup
 
 ### Prerequisites
-- Node.js 20+
+- Node.js 18+
 - npm or yarn
-- Firebase project configuration
+- Supabase project configuration
 - Google AI API key
 
 ### Scripts
-- `npm run dev`: Development server (port 9002)
-- `npm run genkit:dev`: AI development server
+- `npm run dev`: Development server (port 3000)
 - `npm run build`: Production build
 - `npm run lint`: Code linting
 - `npm run typecheck`: TypeScript validation
@@ -154,7 +158,7 @@ handleSubtaskCheck(subtaskId: string, checked: boolean) {
 
 #### Text-to-Tasks Flow
 1. **Input Processing**: User enters descriptive text
-2. **AI Analysis**: Genkit processes text using `textToTasksPrompt`
+2. **AI Analysis**: Google Generative AI processes text using structured prompts
 3. **Task Generation**: AI returns structured task list with titles and subtasks
 4. **User Review**: Generated tasks displayed for approval/editing
 5. **Batch Creation**: Approved tasks added to task list with `current` status

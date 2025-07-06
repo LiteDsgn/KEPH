@@ -65,7 +65,9 @@ export async function GET(request: NextRequest) {
       }
 
       // Successful authentication, redirect to the app
-      return NextResponse.redirect(`${requestUrl.origin}${next}`);
+      // Default to /dashboard for authenticated users
+      const redirectUrl = next === '/' ? '/dashboard' : next;
+      return NextResponse.redirect(`${requestUrl.origin}${redirectUrl}`);
     } catch (error) {
       console.error('Unexpected error in auth callback:', error);
       return NextResponse.redirect(`${requestUrl.origin}/auth/auth-error?message=${encodeURIComponent('Authentication failed')}`);

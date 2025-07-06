@@ -28,6 +28,7 @@ KEPH is an intelligent productivity application designed to streamline your task
   - Built with Next.js, React, ShadCN UI, and Tailwind CSS.
   - A clean, card-based layout that is both responsive and intuitive.
   - A beautiful dark theme that is easy on the eyes.
+  - Route-specific authentication with public landing page access.
   - Progressive Web App (PWA) capabilities for mobile installation.
 
 ## 🚀 Getting Started
@@ -66,9 +67,13 @@ KEPH is an intelligent productivity application designed to streamline your task
    npm run dev
    ```
    Open [http://localhost:3000](http://localhost:3000) in your browser.
+   
+   Note: The development server may run on a different port (e.g., 9003) if 3000 is occupied.
 
 5. **First Time Setup**:
-   - Create an account or sign in
+   - Visit the landing page to learn about KEPH's features
+   - Click "Get Started" or "Sign In" to access the dashboard
+   - Create an account or sign in with Google OAuth
    - Start creating tasks and enjoy the AI-powered productivity!
 
 ### Development

@@ -2,7 +2,6 @@ import type {Metadata} from 'next';
 import './globals.css';
 import '../styles/scrollbar.css';
 import { Toaster } from "@/components/ui/toaster"
-import { AuthGuard } from '@/components/auth/auth-guard';
 
 export const metadata: Metadata = {
   title: 'KEPH',
@@ -22,9 +21,7 @@ export default function RootLayout({
         <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;700&family=Fira+Code&display=swap" rel="stylesheet" />
       </head>
       <body className="font-body antialiased">
-        <AuthGuard>
-          {children}
-        </AuthGuard>
+        {children}
         <Toaster />
       </body>
     </html>
