@@ -1,12 +1,41 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, CheckCircle, PlayCircle } from 'lucide-react';
 
 export const HeroSection: React.FC = () => {
+  useEffect(() => {
+    // Load UNICORN Studio script if not already loaded
+    if (!window.UnicornStudio) {
+      window.UnicornStudio = { 
+        isInitialized: false,
+        init: () => {} // Placeholder until script loads
+      };
+      const script = document.createElement('script');
+      script.src = 'https://cdn.jsdelivr.net/gh/hiunicornstudio/unicornstudio.js@v1.4.27/dist/unicornStudio.umd.js';
+      script.onload = () => {
+        if (!window.UnicornStudio.isInitialized) {
+          window.UnicornStudio.init();
+          window.UnicornStudio.isInitialized = true;
+        }
+      };
+      (document.head || document.body).appendChild(script);
+    }
+  }, []);
+
   return (
-    <section className="py-24 sm:py-32 text-center">
-      <div className="container mx-auto px-4 sm:px-6">
+    <section className="pt-24 sm:pt-32 text-center relative overflow-hidden">
+      {/* UNICORN Studio Background Effect */}
+      <div className="absolute inset-0 z-0 pointer-events-none">
+        <div 
+          className="unicorn-container w-full h-full" 
+          data-us-project="hnA0lhIwdVN0b3aI1EQ6"
+        />
+        {/* Progressive overlay to blend with next section */}
+        <div className="absolute inset-x-0 bottom-0 h-[35%] bg-gradient-to-b from-transparent to-[#171717]" />
+      </div>
+      
+      <div className="container mx-auto px-4 sm:px-6 relative z-10">
         <div className="max-w-4xl mx-auto">
           <div className="inline-block bg-primary/10 text-primary text-sm font-bold px-4 py-2 rounded-full mb-6">Powered by Google Gemini AI</div>
           <h1 className="text-5xl sm:text-7xl lg:text-8xl font-extrabold font-headline tracking-tighter mb-8 leading-tight">Your productivity, amplified by AI</h1>
