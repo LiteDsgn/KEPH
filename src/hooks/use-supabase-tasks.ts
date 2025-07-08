@@ -4,7 +4,7 @@ import { useState, useCallback, useEffect, useMemo } from 'react';
 import { supabase, getCurrentUserId, handleSupabaseError } from '@/lib/supabase';
 import type { Task, TaskStatus, Subtask, Url } from '@/types';
 import type { Database } from '@/types/database';
-import { isBefore, startOfToday } from 'date-fns';
+import { isBefore, startOfToday, isToday } from 'date-fns';
 import { getPendingRecurringInstances, shouldGenerateNextInstance, createRecurringTaskInstance } from '@/lib/recurring-tasks';
 
 type SupabaseTask = Database['public']['Tables']['tasks']['Row'];
@@ -179,10 +179,20 @@ export function useSupabaseTasks() {
         return false;
       });
       
+      // Handle completed tasks from previous days - they should remain completed
+      // The filtering logic in task-list.tsx will automatically show them in the Done tab
+      const updatedTasksWithCompletedHandling = convertedTasks.map(task => {
+        // If task is completed and from a previous day, ensure it stays completed
+        if (task.status === 'completed' && task.completedAt && !isToday(task.completedAt)) {
+          return task; // Keep as completed, filtering will handle tab placement
+        }
+        return task;
+      });
+      
       if (overdue.length > 0) {
         setOverdueTasks(overdue);
         // Update overdue tasks to pending status
-        const updatedTasks = convertedTasks.map(task => {
+        const updatedTasks = updatedTasksWithCompletedHandling.map(task => {
           const isOverdue = overdue.some(ot => ot.id === task.id);
           return isOverdue ? { ...task, status: 'pending' as TaskStatus } : task;
         });
@@ -202,8 +212,8 @@ export function useSupabaseTasks() {
           }
         }
       } else {
-        setTasks(convertedTasks);
-        cacheTasks(convertedTasks);
+        setTasks(updatedTasksWithCompletedHandling);
+        cacheTasks(updatedTasksWithCompletedHandling);
       }
       
     } catch (error: any) {

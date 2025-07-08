@@ -13,7 +13,7 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator
 } from '@/components/ui/dropdown-menu';
-import { MoreHorizontal, Trash2, Archive, Circle, CheckCircle2, Edit, Link as LinkIcon, NotebookText, CalendarDays, Copy, Repeat } from 'lucide-react';
+import { MoreHorizontal, Trash2, Archive, Circle, CheckCircle2, Edit, Link as LinkIcon, NotebookText, CalendarDays, Copy, Repeat, ArrowRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format, isPast, isToday } from 'date-fns';
 import { EditTaskForm } from './edit-task-form';
@@ -73,6 +73,16 @@ export function TaskItem({ task, onUpdate, onDelete, onDuplicate, categories, on
     onUpdate(task.id, { 
         status,
         completedAt: status === 'completed' ? new Date() : undefined
+     });
+  }
+
+  const handleMoveToDone = () => {
+    // Set completedAt to yesterday so it appears in the Done tab
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    onUpdate(task.id, { 
+        status: 'completed',
+        completedAt: yesterday
      });
   }
 
@@ -243,6 +253,13 @@ export function TaskItem({ task, onUpdate, onDelete, onDuplicate, categories, on
                  <DropdownMenuItem onClick={() => handleUpdateStatus('completed')}>
                   <CheckCircle2 className="mr-2 h-4 w-4" />
                   <span>Mark as Completed</span>
+                </DropdownMenuItem>
+              )}
+              {task.status === 'completed' && task.completedAt && isToday(task.completedAt) && 
+               (!task.subtasks || task.subtasks.length === 0 || task.subtasks.every(st => st.completed)) && (
+                <DropdownMenuItem onClick={handleMoveToDone}>
+                  <ArrowRight className="mr-2 h-4 w-4" />
+                  <span>Move to Done</span>
                 </DropdownMenuItem>
               )}
               {task.status !== 'pending' && (

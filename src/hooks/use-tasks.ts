@@ -82,6 +82,14 @@ export function useTasks() {
         if (isOverdue) {
             return { ...task, status: 'pending' as TaskStatus };
         }
+        
+        // Move completed tasks from previous days to done tab
+        if (task.status === 'completed' && task.completedAt && !isToday(task.completedAt)) {
+            // Task is already completed and from a previous day, keep it as completed
+            // The filtering logic in task-list.tsx will handle showing it in the correct tab
+            return task;
+        }
+        
         return task;
     });
     

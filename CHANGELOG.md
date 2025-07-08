@@ -8,6 +8,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Automatic Task Transition System**: Implemented automatic daily task management where completed tasks from previous days automatically appear in the "Done" tab when a new day starts
+- **Enhanced Task Status Management**: Added logic to both local and Supabase task hooks to handle completed task transitions seamlessly
+- **Manual Task Completion Control**: Enhanced "Move to Done" functionality with validation to ensure the option only appears when all subtasks are completed
 - **Component Architecture Refactoring**: Extracted monolithic landing page into 14 smaller, maintainable components
 - **Advanced Section Extraction**: Created three additional reusable components (`InputCaptureSection`, `FeaturesSection`, `UseCasesSection`) for major page sections
 - **Type Safety Enhancement**: Added comprehensive TypeScript interfaces for all component props (`FeatureCardProps`, `PricingCardProps`, `FAQItemProps`, `Testimonial`)
@@ -68,6 +71,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Enhanced Command Palette UX**: Added smooth enter/exit animations with custom cubic-bezier easing and opacity transitions
 
 ### Changed
+- **Task Hook Logic**: Updated both `use-tasks.ts` and `use-supabase-tasks.ts` to automatically handle completed tasks from previous days, ensuring proper tab filtering without manual intervention
+- **Task Filtering Behavior**: Enhanced task management system to seamlessly transition completed tasks to the "Done" tab when a new day begins, maintaining the existing three-tab organization (Current, Done, Pending)
 - **Code Organization**: Refactored main landing page from ~330 lines to 63 lines (70% reduction) by extracting components into separate files
 - **Major Section Extraction**: Further reduced page.tsx by extracting Input Capture Methods, Features, and Use Cases sections into dedicated components
 - **Component Structure**: Improved maintainability with single-responsibility components and clear separation of concerns
