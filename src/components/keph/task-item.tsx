@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, memo } from 'react';
 import type { Task, TaskStatus } from '@/types';
 import { Card, CardContent } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -52,7 +52,7 @@ const getCategoryColor = (category: string) => {
   return colors[Math.abs(hash) % colors.length];
 };
 
-export function TaskItem({ task, onUpdate, onDelete, onDuplicate, categories, onAddCategory }: TaskItemProps) {
+const TaskItem = memo(function TaskItem({ task, onUpdate, onDelete, onDuplicate, categories, onAddCategory }: TaskItemProps) {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
   const handleCheck = (checked: boolean) => {
@@ -298,6 +298,22 @@ export function TaskItem({ task, onUpdate, onDelete, onDuplicate, categories, on
             </div>
         </DialogContent>
       </Dialog>
-    </>
+    </>  
   );
-}
+}, (prevProps, nextProps) => {
+  // Custom comparison function for React.memo
+  return (
+    prevProps.task.id === nextProps.task.id &&
+    prevProps.task.status === nextProps.task.status &&
+    prevProps.task.title === nextProps.task.title &&
+    prevProps.task.completedAt?.getTime() === nextProps.task.completedAt?.getTime() &&
+    prevProps.task.dueDate?.getTime() === nextProps.task.dueDate?.getTime() &&
+    prevProps.task.notes === nextProps.task.notes &&
+    prevProps.task.category === nextProps.task.category &&
+    JSON.stringify(prevProps.task.subtasks) === JSON.stringify(nextProps.task.subtasks) &&
+    JSON.stringify(prevProps.task.urls) === JSON.stringify(nextProps.task.urls) &&
+    JSON.stringify(prevProps.categories) === JSON.stringify(nextProps.categories)
+  );
+});
+
+export { TaskItem };

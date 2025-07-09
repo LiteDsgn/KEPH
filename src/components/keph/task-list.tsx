@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import type { Task, TaskStatus } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -49,45 +49,59 @@ export function TaskList({ tasks, onUpdateTask, onDeleteTask, onDuplicateTask, s
   const [summaryData, setSummaryData] = useState<{ tasks: Task[], dateKey: string } | null>(null);
 
 
-  const filteredTasks = tasks.filter((task) => {
-    if (activeTab === 'current') {
-      return (
-        task.status === 'current' ||
-        (task.status === 'completed' && task.completedAt && isToday(task.completedAt))
-      );
-    }
-    if (activeTab === 'completed') {
-      return task.status === 'completed' && task.completedAt && !isToday(task.completedAt);
-    }
-    if (activeTab === 'pending') {
-      return task.status === 'pending';
-    }
-    return false;
-  });
-
-  const sortTasks = (tasksToSort: Task[]) => {
-    return tasksToSort.sort((a, b) => {
-        if (activeTab === 'completed') {
-            return (b.completedAt?.getTime() || 0) - (a.completedAt?.getTime() || 0);
-        }
-        // Sort by due date, tasks with no due date last
-        if (a.dueDate && b.dueDate) return a.dueDate.getTime() - b.dueDate.getTime();
-        if (a.dueDate) return -1;
-        if (b.dueDate) return 1;
-        return b.createdAt.getTime() - a.createdAt.getTime();
+  // Memoize expensive task filtering operations
+  const filteredTasks = useMemo(() => {
+    return tasks.filter((task) => {
+      // Apply search filter first
+      if (search && !task.title.toLowerCase().includes(search.toLowerCase())) {
+        return false;
+      }
+      
+      // Apply category filter
+      if (selectedCategory && selectedCategory !== 'all' && task.category !== selectedCategory) {
+        return false;
+      }
+      
+      // Apply tab-based status filter
+      if (activeTab === 'current') {
+        return (
+          task.status === 'current' ||
+          (task.status === 'completed' && task.completedAt && isToday(task.completedAt))
+        );
+      }
+      if (activeTab === 'completed') {
+        return task.status === 'completed' && task.completedAt && !isToday(task.completedAt);
+      }
+      if (activeTab === 'pending') {
+        return task.status === 'pending';
+      }
+      return false;
     });
-  }
+  }, [tasks, activeTab, search, selectedCategory]);
 
-  const renderTaskList = (tasksToRender: Task[]) => {
-    if (tasksToRender.length === 0) {
-      return (
-        <div className="text-center text-muted-foreground py-10">
-          <p>No tasks here. ✨</p>
-        </div>
-      );
+  // Memoize expensive task sorting operations
+  const sortTasks = useMemo(() => {
+    return (tasksToSort: Task[]) => {
+      return [...tasksToSort].sort((a, b) => {
+          if (activeTab === 'completed') {
+              return (b.completedAt?.getTime() || 0) - (a.completedAt?.getTime() || 0);
+          }
+          // Sort by due date, tasks with no due date last
+          if (a.dueDate && b.dueDate) return a.dueDate.getTime() - b.dueDate.getTime();
+          if (a.dueDate) return -1;
+          if (b.dueDate) return 1;
+          return b.createdAt.getTime() - a.createdAt.getTime();
+      });
+    };
+  }, [activeTab]);
+
+  // Memoize expensive task grouping operations
+  const groupedAndSortedTasks = useMemo(() => {
+    if (filteredTasks.length === 0) {
+      return { isEmpty: true, groups: [] };
     }
 
-    const groupedTasks = tasksToRender.reduce((acc, task) => {
+    const groupedTasks = filteredTasks.reduce((acc, task) => {
         let dateKeySource: Date | undefined;
         if (activeTab === 'completed') {
             dateKeySource = task.completedAt;
@@ -110,62 +124,84 @@ export function TaskList({ tasks, onUpdateTask, onDeleteTask, onDuplicateTask, s
         return new Date(b).getTime() - new Date(a).getTime();
     });
 
+    const groups = sortedGroupKeys.map((dateKey) => {
+      const groupTasks = groupedTasks[dateKey];
+      const sortedGroupTasks = sortTasks(groupTasks);
+      
+      return {
+        dateKey,
+        tasks: sortedGroupTasks
+      };
+    });
+
+    return { isEmpty: false, groups };
+  }, [filteredTasks, activeTab, sortTasks]);
+
+  const renderTaskList = () => {
+    if (groupedAndSortedTasks.isEmpty) {
+      return (
+        <div className="text-center text-muted-foreground py-10">
+          <p>No tasks here. ✨</p>
+        </div>
+      );
+    }
+
     return (
       <div className="space-y-4 sm:space-y-6">
-        {sortedGroupKeys.map((dateKey) => {
-            const groupTasks = groupedTasks[dateKey];
-            const sortedGroupTasks = sortTasks(groupTasks);
-            
-            return (
-                <div key={dateKey}>
-                    <div className="flex justify-between items-center mb-3">
-                        <h3 className="text-md font-semibold text-muted-foreground px-1">
-                           {formatDateHeading(dateKey)}
-                        </h3>
-                        {dateKey !== 'No Date' && (
-                            <Button
-                                variant="link"
-                                className="text-xs h-auto p-0"
-                                onClick={() => setSummaryData({ dateKey, tasks: groupTasks })}
-                            >
-                                Generate Summary
-                            </Button>
-                        )}
-                    </div>
-                    <div className="space-y-3 sm:space-y-4">
-                        {sortedGroupTasks.map(task => (
-                            <TaskItem
-                                categories={categories}
-                                onAddCategory={onAddCategory}
-                                key={task.id}
-                                task={task}
-                                onUpdate={onUpdateTask}
-                                onDelete={onDeleteTask}
-                                onDuplicate={onDuplicateTask}
-                            />
-                        ))}
-                    </div>
+        {groupedAndSortedTasks.groups.map(({ dateKey, tasks: groupTasks }) => (
+            <div key={dateKey}>
+                <div className="flex justify-between items-center mb-3">
+                    <h3 className="text-md font-semibold text-muted-foreground px-1">
+                       {formatDateHeading(dateKey)}
+                    </h3>
+                    {dateKey !== 'No Date' && (
+                        <Button
+                            variant="link"
+                            className="text-xs h-auto p-0"
+                            onClick={() => setSummaryData({ dateKey, tasks: groupTasks })}
+                        >
+                            Generate Summary
+                        </Button>
+                    )}
                 </div>
-            )
-        })}
+                <div className="space-y-3 sm:space-y-4">
+                    {groupTasks.map(task => (
+                        <TaskItem
+                            categories={categories}
+                            onAddCategory={onAddCategory}
+                            key={task.id}
+                            task={task}
+                            onUpdate={onUpdateTask}
+                            onDelete={onDeleteTask}
+                            onDuplicate={onDuplicateTask}
+                        />
+                    ))}
+                </div>
+            </div>
+        ))}
       </div>
     );
   };
 
+  // Memoize expensive task count calculations
+  const taskCounts = useMemo(() => {
+    const current = tasks.filter(
+      (t) =>
+        t.status === 'current' ||
+        (t.status === 'completed' && t.completedAt && isToday(t.completedAt))
+    ).length;
+    
+    const completed = tasks.filter(
+      (t) => t.status === 'completed' && t.completedAt && !isToday(t.completedAt)
+    ).length;
+    
+    const pending = tasks.filter((t) => t.status === 'pending').length;
+    
+    return { current, completed, pending };
+  }, [tasks]);
+
   const getCount = (status: TaskStatus) => {
-    if (status === 'current') {
-      return tasks.filter(
-        (t) =>
-          t.status === 'current' ||
-          (t.status === 'completed' && t.completedAt && isToday(t.completedAt))
-      ).length;
-    }
-    if (status === 'completed') {
-      return tasks.filter(
-        (t) => t.status === 'completed' && t.completedAt && !isToday(t.completedAt)
-      ).length;
-    }
-    return tasks.filter((t) => t.status === status).length;
+    return taskCounts[status];
   };
 
   return (
@@ -183,6 +219,7 @@ export function TaskList({ tasks, onUpdateTask, onDeleteTask, onDuplicateTask, s
                             <Search className="absolute left-4 h-4 w-4 text-muted-foreground z-10" />
                             <Input
                                 placeholder="Search across all tasks..."
+                                aria-label="Search tasks"
                                 className="w-full pl-12 pr-4 h-12 bg-background/80 backdrop-blur-sm border-border/50 rounded-2xl focus:ring-2 focus:ring-primary/20 transition-all duration-200"
                                 value={search}
                                 onChange={(e) => setSearch(e.target.value)}
@@ -245,17 +282,17 @@ export function TaskList({ tasks, onUpdateTask, onDeleteTask, onDuplicateTask, s
                     <div className="mt-4 sm:mt-6 flex-1 overflow-hidden">
                         <TabsContent value="current" className="h-full overflow-y-auto px-0.5 space-y-1">
                             <div className="pb-4 sm:pb-6">
-                                {renderTaskList(filteredTasks)}
+                                {renderTaskList()}
                             </div>
                         </TabsContent>
                         <TabsContent value="completed" className="h-full overflow-y-auto px-0.5 space-y-1">
                             <div className="pb-4 sm:pb-6">
-                                {renderTaskList(filteredTasks)}
+                                {renderTaskList()}
                             </div>
                         </TabsContent>
                         <TabsContent value="pending" className="h-full overflow-y-auto px-0.5 space-y-1">
                             <div className="pb-4 sm:pb-6">
-                                {renderTaskList(filteredTasks)}
+                                {renderTaskList()}
                             </div>
                         </TabsContent>
                     </div>
