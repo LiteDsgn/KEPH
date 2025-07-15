@@ -361,7 +361,7 @@ export function useSupabaseTasks() {
   }, [isOnline]);
 
   // Add multiple tasks
-  const addTasks = useCallback(async (newTasksData: Array<{ title: string; subtasks?: string[] }>) => {
+  const addTasks = useCallback(async (newTasksData: Array<{ title: string; subtasks?: string[], category?: string }>) => {
     const newTasks: Task[] = newTasksData.map((data) => ({
       id: crypto.randomUUID(),
       title: data.title,
@@ -377,6 +377,7 @@ export function useSupabaseTasks() {
       notes: '',
       urls: [],
       dueDate: new Date(),
+      category: data.category,
     }));
     
     // Optimistic update
@@ -387,14 +388,64 @@ export function useSupabaseTasks() {
     try {
       const userId = await getCurrentUserId();
       
-      for (const task of newTasks) {
-        await addTask(task);
+      // Process each task individually but avoid double optimistic updates
+      for (let i = 0; i < newTasks.length; i++) {
+        const task = newTasks[i];
+        const tempId = task.id;
+        
+        try {
+          // Get category ID if category is specified
+          let categoryId: string | undefined;
+          if (task.category) {
+            const { data: categoryData } = await supabase
+              .from('categories')
+              .select('id')
+              .eq('user_id', userId)
+              .eq('name', task.category)
+              .single();
+            categoryId = categoryData?.id;
+          }
+
+          const { data: insertedTask, error } = await supabase
+            .from('tasks')
+            .insert(convertToSupabaseTask(task, userId, categoryId))
+            .select()
+            .single();
+
+          if (error) throw error;
+
+          // Insert subtasks
+          if (task.subtasks && task.subtasks.length > 0) {
+            const { error: subtasksError } = await supabase
+              .from('subtasks')
+              .insert(
+                task.subtasks.map(st => ({
+                  title: st.title,
+                  completed: st.completed,
+                  task_id: insertedTask.id
+                }))
+              );
+            if (subtasksError) throw subtasksError;
+          }
+
+          // Update with real task ID
+          setTasks(prev => prev.map(t => 
+            t.id === tempId ? { ...task, id: insertedTask.id } : t
+          ));
+          
+        } catch (taskError: any) {
+          console.error(`Error adding task "${task.title}":`, taskError);
+          // Remove the failed task from optimistic update
+          setTasks(prev => prev.filter(t => t.id !== tempId));
+        }
       }
     } catch (error: any) {
       console.error('Error adding tasks:', error);
       setError(error.message || 'Failed to add tasks');
+      // Revert all optimistic updates on general failure
+      setTasks(prev => prev.filter(task => !newTasks.some(nt => nt.id === task.id)));
     }
-  }, [addTask, isOnline]);
+  }, [isOnline]);
 
   // Update task
   const updateTask = useCallback(async (taskId: string, updates: Partial<Omit<Task, 'id' | 'createdAt'>>) => {

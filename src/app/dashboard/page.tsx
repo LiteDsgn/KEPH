@@ -198,7 +198,7 @@ export default function DashboardPage() {
     setActiveModal(null);
   };
 
-  const handleTasksCreated = (tasks: Array<{ title: string; subtasks?: string[], category: string }>) => {
+  const handleTasksCreated = (tasks: Array<{ title: string; subtasks?: string[], category?: string }>) => {
     addTasks(tasks);
     setActiveModal(null);
   };

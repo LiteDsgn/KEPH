@@ -19,7 +19,7 @@ import {
 } from '@/components/ui/dialog';
 
 interface TaskInputAreaProps {
-  onTasksCreated: (tasks: Array<{ title: string; subtasks?: string[] }>) => void;
+  onTasksCreated: (tasks: Array<{ title: string; subtasks?: string[], category?: string }>) => void;
   onTaskCreated: (taskData: Omit<Task, 'id'>) => void;
 }
 
