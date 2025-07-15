@@ -225,6 +225,15 @@ export function useSupabaseTasks() {
     }
   }, [isOnline, cacheTasks]);
 
+  // Debounced refetch to prevent race conditions during rapid operations
+  const debouncedFetchTasks = useCallback(() => {
+    const timeoutId = setTimeout(() => {
+      fetchTasks();
+    }, 500); // 500ms debounce
+    
+    return () => clearTimeout(timeoutId);
+  }, [fetchTasks]);
+
   // Initial load and real-time subscription
   useEffect(() => {
     fetchTasks();
@@ -234,7 +243,7 @@ export function useSupabaseTasks() {
       return;
     }
 
-    // Set up real-time subscription
+    // Set up real-time subscription with debounced refetch
     const channel = supabase
       .channel('tasks-changes')
       .on(
@@ -245,8 +254,9 @@ export function useSupabaseTasks() {
           table: 'tasks'
         },
         () => {
-          // Refetch tasks when changes occur
-          fetchTasks();
+          // Use debounced refetch to prevent race conditions
+          const cleanup = debouncedFetchTasks();
+          return cleanup;
         }
       )
       .on(
@@ -257,7 +267,8 @@ export function useSupabaseTasks() {
           table: 'subtasks'
         },
         () => {
-          fetchTasks();
+          const cleanup = debouncedFetchTasks();
+          return cleanup;
         }
       )
       .on(
@@ -268,7 +279,8 @@ export function useSupabaseTasks() {
           table: 'task_urls'
         },
         () => {
-          fetchTasks();
+          const cleanup = debouncedFetchTasks();
+          return cleanup;
         }
       )
       .subscribe();
@@ -276,7 +288,7 @@ export function useSupabaseTasks() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [fetchTasks, isOnline]);
+  }, [fetchTasks, isOnline, debouncedFetchTasks]);
 
   // Add single task
   const addTask = useCallback(async (taskData: Omit<Task, 'id'>) => {
@@ -347,10 +359,19 @@ export function useSupabaseTasks() {
         if (urlsError) throw urlsError;
       }
 
-      // Update with real task ID
-      setTasks(prev => prev.map(task => 
-        task.id === tempId ? { ...newTask, id: insertedTask.id } : task
-      ));
+      // Update with real task ID and prevent duplicates
+      setTasks(prev => {
+        // Check if task with real ID already exists (from debounced fetch)
+        const realTaskExists = prev.some(t => t.id === insertedTask.id);
+        if (realTaskExists) {
+          // Remove the temporary task since real one exists
+          return prev.filter(task => task.id !== tempId);
+        }
+        // Update temporary task with real ID
+        return prev.map(task => 
+          task.id === tempId ? { ...newTask, id: insertedTask.id } : task
+        );
+      });
       
     } catch (error: any) {
       console.error('Error adding task:', error);
@@ -428,10 +449,19 @@ export function useSupabaseTasks() {
             if (subtasksError) throw subtasksError;
           }
 
-          // Update with real task ID
-          setTasks(prev => prev.map(t => 
-            t.id === tempId ? { ...task, id: insertedTask.id } : t
-          ));
+          // Update with real task ID and prevent duplicates
+          setTasks(prev => {
+            // Check if task with real ID already exists (from debounced fetch)
+            const realTaskExists = prev.some(t => t.id === insertedTask.id);
+            if (realTaskExists) {
+              // Remove the temporary task since real one exists
+              return prev.filter(t => t.id !== tempId);
+            }
+            // Update temporary task with real ID
+            return prev.map(t => 
+              t.id === tempId ? { ...task, id: insertedTask.id } : t
+            );
+          });
           
         } catch (taskError: any) {
           console.error(`Error adding task "${task.title}":`, taskError);
@@ -635,7 +665,18 @@ export function useSupabaseTasks() {
       dueDate: new Date(),
       completedAt: undefined,
       parentRecurringTaskId: undefined,
-      isRecurringInstance: false
+      isRecurringInstance: false,
+      // Generate new IDs for subtasks to avoid React key conflicts
+      subtasks: taskToDuplicate.subtasks?.map(subtask => ({
+        ...subtask,
+        id: crypto.randomUUID(),
+        completed: false // Reset completion status for duplicated subtasks
+      })),
+      // Generate new IDs for URLs to avoid React key conflicts
+      urls: taskToDuplicate.urls?.map(url => ({
+        ...url,
+        id: crypto.randomUUID()
+      }))
     };
 
     await addTask(duplicatedTask);

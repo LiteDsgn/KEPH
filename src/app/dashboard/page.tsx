@@ -1,9 +1,11 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import { useSupabaseTasks } from '@/hooks/use-supabase-tasks';
 import { useSupabaseCategories } from '@/hooks/use-supabase-categories';
 import { useAuth } from '@/hooks/use-auth';
+import { toast } from '@/hooks/use-toast';
 
 import {
   DropdownMenu,
@@ -65,7 +67,22 @@ export default function DashboardPage() {
   } = useSupabaseTasks();
   const { categories, addCategory, editCategory, removeCategory, canEditCategory, canRemoveCategory } = useSupabaseCategories();
   const { user, signOut } = useAuth();
+  const router = useRouter();
   const sheetSide = useResponsiveSheetSide();
+
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+      router.push('/auth');
+    } catch (error) {
+      console.error('Error signing out:', error);
+      toast({
+        title: 'Sign Out Error',
+        description: 'Failed to sign out. Please try again.',
+        variant: 'destructive',
+      });
+    }
+  };
 
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [activeModal, setActiveModal] = useState<'manual' | 'text' | 'transcript' | null>(null);
@@ -300,7 +317,7 @@ export default function DashboardPage() {
                       </div>
                     </DropdownMenuLabel>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem className="cursor-pointer">
+                    <DropdownMenuItem className="cursor-pointer" onClick={() => router.push('/profile')}>
                       <User className="mr-2 h-4 w-4" />
                       <span>Profile</span>
                     </DropdownMenuItem>
