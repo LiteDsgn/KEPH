@@ -5,7 +5,9 @@ import { useRouter } from 'next/navigation';
 import { useSupabaseTasks } from '@/hooks/use-supabase-tasks';
 import { useSupabaseCategories } from '@/hooks/use-supabase-categories';
 import { useAuth } from '@/hooks/use-auth';
+import { useTimezone } from '@/hooks/use-timezone';
 import { toast } from '@/hooks/use-toast';
+import { createTimezoneTaskService } from '@/lib/services/timezone-task-service';
 
 import {
   DropdownMenu,
@@ -67,6 +69,7 @@ export default function DashboardPage() {
   } = useSupabaseTasks();
   const { categories, addCategory, editCategory, removeCategory, canEditCategory, canRemoveCategory } = useSupabaseCategories();
   const { user, signOut } = useAuth();
+  const timezoneHook = useTimezone();
   const router = useRouter();
   const sheetSide = useResponsiveSheetSide();
 
@@ -90,7 +93,31 @@ export default function DashboardPage() {
   const [showKeyboardShortcuts, setShowKeyboardShortcuts] = useState(false);
   const [showCommandPalette, setShowCommandPalette] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [timezoneTaskStats, setTimezoneTaskStats] = useState<{
+    total: number;
+    completed: number;
+    pending: number;
+    overdue: number;
+  } | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Fetch timezone-aware task statistics
+  useEffect(() => {
+    const fetchTimezoneStats = async () => {
+      if (user && timezoneHook.timezone && !timezoneHook.isLoading) {
+        try {
+          const taskService = createTimezoneTaskService(user.id, timezoneHook.timezone);
+          const stats = await taskService.getDailyTaskStats();
+          setTimezoneTaskStats(stats);
+        } catch (error) {
+          console.error('Error fetching timezone task stats:', error);
+        }
+      }
+    };
+
+    fetchTimezoneStats();
+  }, [user, timezoneHook.timezone, timezoneHook.isLoading, tasks]); // Re-fetch when tasks change
 
   useEffect(() => {
     setNotifications(prevNotifications => {
@@ -269,7 +296,6 @@ export default function DashboardPage() {
                   <h1 className="text-2xl font-bold font-headline text-primary tracking-tight">KEPH</h1>
                   <p className="text-sm text-muted-foreground font-medium">Intelligent Productivity</p>
                 </div>
-
               </div>
               
               <div className="flex items-center gap-3">
@@ -277,6 +303,29 @@ export default function DashboardPage() {
                   <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
                   <span className="text-xs font-medium text-muted-foreground">AI Ready</span>
                 </div>
+                
+                {/* Timezone-aware task stats */}
+                {timezoneTaskStats && (
+                  <div className="hidden lg:flex items-center gap-3 px-4 py-2 bg-card/50 rounded-full border border-border/30">
+                    <div className="flex items-center gap-1">
+                      <div className="w-2 h-2 bg-blue-500 rounded-full" />
+                      <span className="text-xs font-medium text-muted-foreground">
+                        {timezoneTaskStats.completed}/{timezoneTaskStats.total} today
+                      </span>
+                    </div>
+                    {timezoneTaskStats.overdue > 0 && (
+                      <div className="flex items-center gap-1">
+                        <div className="w-2 h-2 bg-red-500 rounded-full" />
+                        <span className="text-xs font-medium text-red-600">
+                          {timezoneTaskStats.overdue} overdue
+                        </span>
+                      </div>
+                    )}
+                    <div className="text-xs text-muted-foreground">
+                      {timezoneHook.getTimezoneDisplay()}
+                    </div>
+                  </div>
+                )}
 
                 <Button variant="ghost" size="icon" onClick={() => setShowCategoryManager(true)} className="rounded-full transition-all duration-200 hover:bg-accent/50">
                   <FolderKanban className="h-5 w-5" />
@@ -294,7 +343,7 @@ export default function DashboardPage() {
                   </Button>
                 </SheetTrigger>
                 
-                <DropdownMenu>
+                <DropdownMenu open={dropdownOpen} onOpenChange={setDropdownOpen}>
                   <DropdownMenuTrigger asChild>
                     <Button variant="ghost" size="icon" className="relative hover:bg-accent/50 rounded-full transition-all duration-200">
                       <Avatar className="h-8 w-8">
@@ -317,18 +366,18 @@ export default function DashboardPage() {
                       </div>
                     </DropdownMenuLabel>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem className="cursor-pointer" onClick={() => router.push('/profile')}>
+                    <DropdownMenuItem className="cursor-pointer" onClick={() => { router.push('/profile'); setDropdownOpen(false); }}>
                       <User className="mr-2 h-4 w-4" />
                       <span>Profile</span>
                     </DropdownMenuItem>
-                    <DropdownMenuItem className="cursor-pointer">
+                    <DropdownMenuItem className="cursor-pointer" onClick={() => { router.push('/settings'); setDropdownOpen(false); }}>
                       <Settings className="mr-2 h-4 w-4" />
                       <span>Settings</span>
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem 
                       className="cursor-pointer text-destructive focus:text-destructive"
-                      onClick={() => signOut()}
+                      onClick={() => { signOut(); setDropdownOpen(false); }}
                     >
                       <LogOut className="mr-2 h-4 w-4" />
                       <span>Log out</span>

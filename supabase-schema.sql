@@ -64,6 +64,22 @@ CREATE TABLE public.task_urls (
   created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
 );
 
+-- User Settings table
+CREATE TABLE public.user_settings (
+  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  user_id UUID REFERENCES public.users(id) ON DELETE CASCADE NOT NULL UNIQUE,
+  notifications_enabled BOOLEAN DEFAULT TRUE NOT NULL,
+  email_notifications BOOLEAN DEFAULT TRUE NOT NULL,
+  task_reminders BOOLEAN DEFAULT TRUE NOT NULL,
+  weekly_summary BOOLEAN DEFAULT FALSE NOT NULL,
+  theme_preference TEXT DEFAULT 'system' CHECK (theme_preference IN ('light', 'dark', 'system')) NOT NULL,
+  timezone TEXT DEFAULT 'UTC' NOT NULL,
+  date_format TEXT DEFAULT 'MM/DD/YYYY' CHECK (date_format IN ('MM/DD/YYYY', 'DD/MM/YYYY', 'YYYY-MM-DD')) NOT NULL,
+  time_format TEXT DEFAULT '12h' CHECK (time_format IN ('12h', '24h')) NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+  updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
+);
+
 -- Create indexes for better performance
 CREATE INDEX idx_tasks_user_id ON public.tasks(user_id);
 CREATE INDEX idx_tasks_status ON public.tasks(status);
@@ -72,6 +88,7 @@ CREATE INDEX idx_tasks_category_id ON public.tasks(category_id);
 CREATE INDEX idx_subtasks_task_id ON public.subtasks(task_id);
 CREATE INDEX idx_task_urls_task_id ON public.task_urls(task_id);
 CREATE INDEX idx_categories_user_id ON public.categories(user_id);
+CREATE INDEX idx_user_settings_user_id ON public.user_settings(user_id);
 
 -- Create updated_at trigger function
 CREATE OR REPLACE FUNCTION update_updated_at_column()
@@ -95,12 +112,16 @@ CREATE TRIGGER update_tasks_updated_at BEFORE UPDATE ON public.tasks
 CREATE TRIGGER update_subtasks_updated_at BEFORE UPDATE ON public.subtasks
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
+CREATE TRIGGER update_user_settings_updated_at BEFORE UPDATE ON public.user_settings
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
 -- Row Level Security (RLS) policies
 ALTER TABLE public.users ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.categories ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.tasks ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.subtasks ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.task_urls ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.user_settings ENABLE ROW LEVEL SECURITY;
 
 -- Users can only see and modify their own data
 CREATE POLICY "Users can view own profile" ON public.users
@@ -212,6 +233,19 @@ CREATE POLICY "Users can delete URLs of own tasks" ON public.task_urls
     )
   );
 
+-- User Settings policies
+CREATE POLICY "Users can view own settings" ON public.user_settings
+  FOR SELECT USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can insert own settings" ON public.user_settings
+  FOR INSERT WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users can update own settings" ON public.user_settings
+  FOR UPDATE USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can delete own settings" ON public.user_settings
+  FOR DELETE USING (auth.uid() = user_id);
+
 -- Function to handle user creation
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER AS $$
@@ -228,7 +262,28 @@ BEGIN
   INSERT INTO public.categories (name, user_id, color)
   VALUES ('General', NEW.id, '#6366f1');
   
+  -- Create default settings for new user
+  INSERT INTO public.user_settings (user_id)
+  VALUES (NEW.id);
+  
   RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Function to delete user account and all associated data
+CREATE OR REPLACE FUNCTION delete_user_account(user_uuid UUID)
+RETURNS VOID AS $$
+BEGIN
+  -- Check if the requesting user is the same as the user being deleted
+  IF auth.uid() != user_uuid THEN
+    RAISE EXCEPTION 'Unauthorized: Cannot delete another user''s account';
+  END IF;
+  
+  -- Delete user data (cascading deletes will handle related tables)
+  DELETE FROM public.users WHERE id = user_uuid;
+  
+  -- Delete from auth.users (this will trigger cascading deletes)
+  DELETE FROM auth.users WHERE id = user_uuid;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 

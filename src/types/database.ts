@@ -214,12 +214,156 @@ export interface Database {
           }
         ]
       }
+      user_settings: {
+        Row: {
+          id: string
+          user_id: string
+          notifications_enabled: boolean
+          email_notifications: boolean
+          task_reminders: boolean
+          weekly_summary: boolean
+          theme_preference: 'light' | 'dark' | 'system'
+          timezone: string
+          date_format: 'MM/DD/YYYY' | 'DD/MM/YYYY' | 'YYYY-MM-DD'
+          time_format: '12h' | '24h'
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          notifications_enabled?: boolean
+          email_notifications?: boolean
+          task_reminders?: boolean
+          weekly_summary?: boolean
+          theme_preference?: 'light' | 'dark' | 'system'
+          timezone?: string
+          date_format?: 'MM/DD/YYYY' | 'DD/MM/YYYY' | 'YYYY-MM-DD'
+          time_format?: '12h' | '24h'
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          notifications_enabled?: boolean
+          email_notifications?: boolean
+          task_reminders?: boolean
+          weekly_summary?: boolean
+          theme_preference?: 'light' | 'dark' | 'system'
+          timezone?: string
+          date_format?: 'MM/DD/YYYY' | 'DD/MM/YYYY' | 'YYYY-MM-DD'
+          time_format?: '12h' | '24h'
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_settings_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      delete_user_account: {
+        Args: {
+          user_uuid: string
+        }
+        Returns: undefined
+      }
+      get_user_timezone: {
+        Args: {
+          user_uuid: string
+        }
+        Returns: string
+      }
+      get_user_start_of_day: {
+        Args: {
+          user_uuid: string
+          target_date?: string
+        }
+        Returns: string
+      }
+      get_user_end_of_day: {
+        Args: {
+          user_uuid: string
+          target_date?: string
+        }
+        Returns: string
+      }
+      is_today_in_user_timezone: {
+        Args: {
+          user_uuid: string
+          check_timestamp: string
+        }
+        Returns: boolean
+      }
+      is_task_overdue_in_user_timezone: {
+        Args: {
+          user_uuid: string
+          due_date: string
+        }
+        Returns: boolean
+      }
+      get_tasks_due_today: {
+        Args: {
+          user_uuid: string
+        }
+        Returns: {
+          id: string
+          title: string
+          notes: string | null
+          due_date: string | null
+          status: 'current' | 'completed' | 'pending'
+          category_id: string | null
+          created_at: string
+          updated_at: string
+          completed_at: string | null
+          user_id: string
+          recurrence_type: 'none' | 'daily' | 'weekly' | 'monthly' | 'yearly' | null
+          recurrence_interval: number | null
+          recurrence_end_date: string | null
+          recurrence_max_occurrences: number | null
+          parent_recurring_task_id: string | null
+          is_recurring_instance: boolean
+        }[]
+      }
+      get_overdue_tasks: {
+        Args: {
+          user_uuid: string
+        }
+        Returns: {
+          id: string
+          title: string
+          notes: string | null
+          due_date: string | null
+          status: 'current' | 'completed' | 'pending'
+          category_id: string | null
+          created_at: string
+          updated_at: string
+          completed_at: string | null
+          user_id: string
+          recurrence_type: 'none' | 'daily' | 'weekly' | 'monthly' | 'yearly' | null
+          recurrence_interval: number | null
+          recurrence_end_date: string | null
+          recurrence_max_occurrences: number | null
+          parent_recurring_task_id: string | null
+          is_recurring_instance: boolean
+        }[]
+      }
+      transition_daily_tasks: {
+        Args: {
+          user_uuid: string
+        }
+        Returns: Json
+      }
     }
     Enums: {
       task_status: 'current' | 'completed' | 'pending'

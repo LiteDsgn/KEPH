@@ -8,6 +8,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Comprehensive Timezone Functionality**: Implemented user-specific timezone support with timezone-aware task management, enabling proper "midnight" calculations for daily task transitions
+- **Timezone Database Functions**: Added PostgreSQL functions (`get_user_timezone`, `get_user_start_of_day`, `get_user_end_of_day`, `is_today_in_user_timezone`, `is_task_overdue_in_user_timezone`, `get_tasks_due_today`, `get_overdue_tasks`, `transition_daily_tasks`) for server-side timezone calculations
+- **Timezone Task Service**: Created `TimezoneTaskService` class with methods for retrieving timezone-aware tasks, handling overdue detection, and managing daily task transitions
+- **Timezone Settings Integration**: Enhanced user settings with timezone selection and real-time timezone updates across the application
+- **Database Migration Safety**: Implemented proper `DROP FUNCTION IF EXISTS` statements in migration files to prevent PostgreSQL function signature conflicts
 - **OAuth Existing User Support**: Implemented comprehensive fallback logic for OAuth authentication to handle existing users who may lack complete profile data
 - **Enhanced OAuth Callback Handling**: Added robust user profile detection and creation for existing OAuth users missing database records
 - **OAuth Profile Synchronization**: Implemented automatic profile metadata updates during OAuth sign-in to keep user information current
@@ -106,6 +111,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Modified panel styling to dynamically adjust height and border radius based on screen size
 
 ### Fixed
+- **Timezone Service Type Safety**: Resolved TypeScript diagnostic errors in `timezone-task-service.ts` by correcting database function return types and aligning the `TimezoneAwareTask` interface with actual database schema
+- **Database Function Schema Alignment**: Fixed type mismatches between database functions (`get_tasks_due_today`, `get_overdue_tasks`) and TypeScript interfaces by updating SQL functions to return `notes` instead of `description` and including all required task fields
+- **Settings Save Error Handling**: Enhanced error handling in settings page with detailed logging, input validation, and improved user feedback for timezone-related operations
+- **PostgreSQL Function Migration**: Resolved "cannot change return type of existing function" errors by adding proper `DROP FUNCTION IF EXISTS` statements before function recreation
 - **OAuth Existing User Authentication**: Resolved authentication failures for existing OAuth users by implementing fallback user profile creation when database records are missing
 - **OAuth Race Condition**: Fixed duplicate user creation attempts between manual logic and database triggers that caused RLS policy violations
 - **OAuth Profile Data Gaps**: Eliminated issues where existing users lacked complete profile information or default categories
