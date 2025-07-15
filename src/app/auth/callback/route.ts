@@ -37,29 +37,59 @@ export async function GET(request: NextRequest) {
       }
 
       if (data.user) {
-        // Check if user exists in our users table, if not create them
-        const { data: existingUser, error: userError } = await supabase
+        console.log('OAuth callback - User:', data.user.email, 'Session:', !!data.session);
+        
+        // Check if user profile exists, create if missing (fallback for existing users)
+        const { data: existingUser, error: userCheckError } = await supabase
           .from('users')
-          .select('id')
+          .select('id, full_name, avatar_url')
           .eq('id', data.user.id)
           .single();
-
-        if (userError && userError.code === 'PGRST116') {
-          // User doesn't exist, create them
-          const { error: insertError } = await supabase
-            .from('users')
-            .insert({
-              id: data.user.id,
-              email: data.user.email!,
-              full_name: data.user.user_metadata?.full_name || data.user.user_metadata?.name || '',
-              avatar_url: data.user.user_metadata?.avatar_url || null,
-              created_at: new Date().toISOString(),
-              updated_at: new Date().toISOString()
+          
+        if (userCheckError && userCheckError.code === 'PGRST116') {
+          // User doesn't exist in public.users table, create profile
+          console.log('Creating missing profile for existing OAuth user:', data.user.email);
+          
+          const { error: userInsertError } = await supabase.from('users').insert({
+             id: data.user.id,
+             email: data.user.email!,
+             full_name: data.user.user_metadata?.full_name || null,
+             avatar_url: data.user.user_metadata?.avatar_url || null
+           });
+          
+          if (userInsertError) {
+            console.error('Error creating user profile:', userInsertError);
+          } else {
+            // Create default category for the user
+            const { error: categoryError } = await supabase.from('categories').insert({
+              name: 'General',
+              user_id: data.user.id,
+              color: '#6366f1'
             });
-
-          if (insertError) {
-            console.error('Error creating user record:', insertError);
-            // Don't fail the auth flow, just log the error
+            
+            if (categoryError) {
+              console.error('Error creating default category:', categoryError);
+            }
+          }
+        } else if (existingUser) {
+          // User exists, update metadata if it has changed
+          const newFullName = data.user.user_metadata?.full_name || null;
+          const newAvatarUrl = data.user.user_metadata?.avatar_url || null;
+          
+          if (newFullName !== existingUser.full_name || newAvatarUrl !== existingUser.avatar_url) {
+            const { error: updateError } = await supabase.from('users')
+                .update({
+                  full_name: newFullName,
+                  avatar_url: newAvatarUrl,
+                  updated_at: new Date().toISOString()
+                })
+                .eq('id', data.user.id);
+               
+            if (updateError) {
+              console.error('Error updating user metadata:', updateError);
+            } else {
+              console.log('Updated user metadata for:', data.user.email);
+            }
           }
         }
       }
