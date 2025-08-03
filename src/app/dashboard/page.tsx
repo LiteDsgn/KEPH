@@ -28,7 +28,7 @@ import { ManualTaskForm } from '@/components/keph/manual-task-form';
 import { CategoryManager } from '@/components/keph/category-manager';
 import { KeyboardShortcutsDialog } from '@/components/keph/keyboard-shortcuts-dialog';
 import { CommandPalette } from '@/components/keph/command-palette';
-import { FolderKanban } from 'lucide-react';
+import { FolderKanban, BarChart3 } from 'lucide-react';
 import { BrainCircuit, Bell, FileText, ClipboardList, PlusCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
@@ -330,6 +330,11 @@ export default function DashboardPage() {
                 <Button variant="ghost" size="icon" onClick={() => setShowCategoryManager(true)} className="rounded-full transition-all duration-200 hover:bg-accent/50">
                   <FolderKanban className="h-5 w-5" />
                   <span className="sr-only">Manage Categories</span>
+                </Button>
+                
+                <Button variant="ghost" size="icon" onClick={() => router.push('/reports')} className="rounded-full transition-all duration-200 hover:bg-accent/50">
+                  <BarChart3 className="h-5 w-5" />
+                  <span className="sr-only">View Reports</span>
                 </Button>
                 
                 <SheetTrigger asChild>

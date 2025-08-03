@@ -1,0 +1,323 @@
+'use client'
+
+import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
+import { Plus, FileText, Share2, Calendar, Filter, BarChart3 } from 'lucide-react'
+import { Report } from '@/types'
+import { format } from 'date-fns'
+import { ReportGenerator } from '@/components/keph/report-generator'
+
+export default function ReportsPage() {
+  const router = useRouter()
+  const [reports, setReports] = useState<Report[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [showGenerator, setShowGenerator] = useState(false)
+
+  useEffect(() => {
+    fetchReports()
+  }, [])
+
+  const fetchReports = async () => {
+    try {
+      // Mock data for UI testing
+      const mockReports: Report[] = [
+        {
+          id: '1',
+          user_id: 'user1',
+          title: 'My Weekly Productivity Journey',
+          description: 'How I spent my time this week and what I accomplished',
+          report_type: 'productivity',
+          tone_profile: 'professional',
+          date_range_start: '2024-01-15',
+          date_range_end: '2024-01-21',
+          filters: { categories: ['work', 'personal'] },
+          content: 'What a week January 15-21 has been! I completed 85% of my planned tasks, which feels like a solid achievement. Looking back at how I spent my time this week:\n\n**Week 3 of January - My Task Journey:**\n\n*Monday-Tuesday:* I focused heavily on work projects, knocking out 12 tasks including that big presentation I\'d been putting off. It felt great to finally tackle it head-on.\n\n*Wednesday-Thursday:* I shifted gears to personal organization tasks. Cleaned up my digital workspace and planned out the rest of the month. These smaller wins really added up.\n\n*Friday-Weekend:* I wrapped up loose ends and started preparing for next week. I\'m particularly proud of how I balanced work and personal tasks this week.',
+          is_public: false,
+          created_at: '2024-01-22T10:00:00Z',
+          updated_at: '2024-01-22T10:00:00Z',
+          totalSubtasks: 120,
+          totalUrls: 5
+        },
+        {
+          id: '2',
+          user_id: 'user1',
+          title: 'My February Growth Story',
+          description: 'Reflecting on my task completion journey and personal wins this month',
+          report_type: 'completion',
+          tone_profile: 'analytical',
+          date_range_start: '2024-01-01',
+          date_range_end: '2024-01-31',
+          filters: { priority: ['high', 'medium'] },
+          content: 'February has been a month of real growth for me! My completion rate improved by 15% compared to January, and I can feel the momentum building.\n\n**How I spent my time this month:**\n\n*Week 1:* I started strong with 22 completed tasks, focusing mainly on setting up systems and routines.\n\n*Week 2:* Hit my stride with 28 tasks completed. This was my most productive week - I found my rhythm with morning planning sessions.\n\n*Week 3:* Maintained consistency with 25 tasks done. I noticed I work best when I batch similar tasks together.\n\n*Week 4:* Finished strong with 30 tasks completed. I\'m really proud of how I pushed through the end-of-month fatigue.',
+          is_public: true,
+          created_at: '2024-02-01T09:00:00Z',
+          updated_at: '2024-02-01T09:00:00Z',
+          totalSubtasks: 80,
+          totalUrls: 12
+        },
+        {
+          id: '3',
+          user_id: 'user1',
+          title: 'My Work Pattern Discoveries',
+          description: 'What I learned about my productivity habits and biggest achievements',
+          report_type: 'category_breakdown',
+          tone_profile: 'motivational',
+          date_range_start: '2024-01-01',
+          date_range_end: '2024-01-31',
+          filters: {},
+          content: 'I\'ve been reflecting on my work patterns this month, and I\'m genuinely excited about the progress I\'ve made! My work category performance has been consistently improving.\n\n**My biggest wins this month:**\n\n*Week 1:* I established a new morning routine that set the tone for productive days.\n\n*Week 2:* I tackled 3 major projects that I\'d been avoiding - it felt incredible to finally check them off.\n\n*Week 3:* I found my sweet spot for deep work sessions, usually between 9-11 AM when my energy is highest.\n\n*Week 4:* I successfully maintained my momentum even when motivation dipped. That\'s real growth for me!',
+          is_public: false,
+          created_at: '2024-02-02T14:30:00Z',
+          updated_at: '2024-02-02T14:30:00Z',
+          totalSubtasks: 50,
+          totalUrls: 3
+        }
+      ]
+      
+      // Simulate API delay
+      await new Promise(resolve => setTimeout(resolve, 1000))
+      setReports(mockReports)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An error occurred')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const getReportTypeColor = (type: Report['report_type']) => {
+    const colors = {
+      productivity: 'bg-blue-100 text-blue-800',
+      completion: 'bg-green-100 text-green-800',
+      category_breakdown: 'bg-purple-100 text-purple-800',
+      time_analysis: 'bg-orange-100 text-orange-800',
+      custom: 'bg-gray-100 text-gray-800',
+    }
+    return colors[type] || colors.custom
+  }
+
+  const getToneProfileColor = (tone: Report['tone_profile']) => {
+    const colors = {
+      professional: 'bg-slate-100 text-slate-800',
+      casual: 'bg-yellow-100 text-yellow-800',
+      motivational: 'bg-pink-100 text-pink-800',
+      analytical: 'bg-indigo-100 text-indigo-800',
+    }
+    return colors[tone]
+  }
+
+  if (loading) {
+    return (
+      <div className="container mx-auto p-6">
+        <div className="flex items-center justify-center h-64">
+          <div className="text-lg">Loading reports...</div>
+        </div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="container mx-auto p-6">
+        <div className="flex items-center justify-center h-64">
+          <div className="text-lg text-red-600">Error: {error}</div>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-background to-muted/50 font-body">
+      <div className="container max-w-4xl mx-auto py-8 px-4">
+        <div className="flex items-center gap-4 mb-8">
+          <Button 
+            variant="ghost" 
+            className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
+            onClick={() => router.push('/dashboard')}
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-arrow-left h-4 w-4">
+              <path d="m12 19-7-7 7-7"></path>
+              <path d="M19 12H5"></path>
+            </svg>
+            Back to Dashboard
+          </Button>
+        </div>
+      
+        {/* Page Header */}
+        <Card className="bg-card/60 backdrop-blur-xl border-border/30 shadow-lg mb-8">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className="p-3 rounded-lg bg-primary/10">
+                   <BarChart3 className="h-8 w-8 text-primary" />
+                 </div>
+                <div>
+                  <CardTitle className="text-3xl font-bold font-headline tracking-tight bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
+                    Reports
+                  </CardTitle>
+                  <CardDescription className="text-base text-muted-foreground">
+                    Generate and manage your productivity reports
+                  </CardDescription>
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                <Button variant="outline" className="flex items-center gap-2 bg-muted/50 border-border/50">
+                  <Filter className="h-4 w-4" />
+                  Search
+                </Button>
+                <Button className="flex items-center gap-2" onClick={() => setShowGenerator(true)}>
+                  <Plus className="h-4 w-4" />
+                  Generate
+                </Button>
+              </div>
+            </div>
+          </CardHeader>
+        </Card>
+
+      {reports.length === 0 ? (
+        <Card className="text-center py-12">
+          <CardContent>
+            <FileText className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+            <h3 className="text-lg font-semibold mb-2">No reports yet</h3>
+            <p className="text-muted-foreground mb-4">
+              Generate your first productivity report to get insights into your task completion patterns.
+            </p>
+            <Button className="flex items-center gap-2 mx-auto" onClick={() => setShowGenerator(true)}>
+              <Plus className="h-4 w-4" />
+              Generate Your First Report
+            </Button>
+          </CardContent>
+        </Card>
+      ) : (
+        /* Timeline Layout */
+        <div className="relative">
+          {reports.map((report, index) => (
+            <div key={report.id} className="flex relative">
+              {/* Date Column - Fixed width and sticky */}
+              <div className="w-[130px] flex-shrink-0 pr-6 mt-8 sticky top-8 self-start">
+                <div className="text-sm font-medium text-foreground">
+                  {format(new Date(report.created_at), 'MMM d, yyyy')}
+                </div>
+                <div className="text-xs text-muted-foreground mt-1">
+                  {format(new Date(report.created_at), 'h:mm a')}
+                </div>
+                <div className="text-xs text-muted-foreground mt-1 capitalize">
+                  {report.report_type.replace('_', ' ')} Report
+                </div>
+              </div>
+              
+              {/* Timeline Line and Dot */}
+              <div className="relative flex flex-col items-center">
+                <div className="w-3 h-3 bg-primary rounded-full border-2 border-background shadow-sm z-10 mt-8" />
+                {index < reports.length - 1 && (
+                  <div className="w-px bg-border flex-1 mt-2" style={{ minHeight: '200px' }} />
+                )}
+              </div>
+              
+              {/* Content Area - Flexible width */}
+              <div className="flex-1 pl-6 pb-12">
+                <Card className="w-full bg-card/60 backdrop-blur-xl border-border/30 shadow-lg">
+    
+                  <CardContent className="space-y-6 pt-6">
+                    {/* Personal Intro Section */}
+                    {/* Title */}
+                    <div className="space-y-2">
+                      <CardTitle className="text-xl">{report.title}</CardTitle>
+
+
+                    </div>
+
+                    {/* Report Period */}
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <Calendar className="h-4 w-4" />
+                      <span>
+                        Report Period: {format(new Date(report.date_range_start), 'MMM d')} - {format(new Date(report.date_range_end), 'MMM d, yyyy')}
+                      </span>
+                    </div>
+
+                    {/* Stats Grid */}
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                      <div className="text-center p-3 bg-muted/50 rounded-lg">
+                        <div className="text-2xl font-bold text-primary">85%</div>
+                        <div className="text-xs text-muted-foreground">Completion Rate</div>
+                      </div>
+                      <div className="text-center p-3 bg-muted/50 rounded-lg">
+                        <div className="text-2xl font-bold text-green-600">42</div>
+                        <div className="text-xs text-muted-foreground">Tasks Completed</div>
+                      </div>
+                      <div className="text-center p-3 bg-muted/50 rounded-lg">
+                        <div className="text-2xl font-bold text-blue-600">
+                          {report.totalSubtasks || 0}
+                        </div>
+                        <div className="text-xs text-muted-foreground">Total Subtasks</div>
+                      </div>
+                      <div className="text-center p-3 bg-muted/50 rounded-lg">
+                        <div className="text-2xl font-bold text-purple-600">
+                          {report.totalUrls || 0}
+                        </div>
+                        <div className="text-xs text-muted-foreground">Total URLs</div>
+                      </div>
+                    </div>
+
+                    {/* Report Content */}
+                    <div className="prose prose-sm max-w-none">
+                      <div 
+                        className="text-muted-foreground leading-relaxed space-y-4"
+                        dangerouslySetInnerHTML={{
+                          __html: report.content
+                            .replace(/\*\*([^*]+)\*\*/g, '<h3 class="text-lg font-semibold text-foreground mb-3 mt-6">$1</h3>')
+                            .replace(/\*([^*\n]+)\*/g, '<div class="flex items-start gap-3 mb-2"><div class="w-2 h-2 bg-primary rounded-full mt-2 flex-shrink-0"></div><div class="font-medium text-foreground">$1</div></div>')
+                            .replace(/\n\n/g, '</p><p class="mb-3">')
+                            .replace(/^/, '<p class="mb-3">')
+                            .replace(/$/, '</p>')
+                        }}
+                      />
+                    </div>
+
+                    {/* Categories Reported (Placeholder - assuming this will be added later) */}
+                    <div className="flex flex-wrap gap-2">
+                        <Badge className={getReportTypeColor(report.report_type)}>
+                          {report.report_type.replace('_', ' ')}
+                        </Badge>
+                        <Badge variant="outline" className={getToneProfileColor(report.tone_profile)}>
+                          {report.tone_profile}
+                        </Badge>
+                        {report.is_public && (
+                          <Badge variant="secondary" className="flex items-center gap-1">
+                            <Share2 className="h-3 w-3" />
+                            Public
+                          </Badge>
+                        )}
+                      </div>
+
+                    {/* Action Buttons */}
+                    <div className="flex items-center gap-2 pt-4 border-t border-border/30">
+                      <Button variant="outline" size="sm" className="flex items-center gap-2 bg-muted/50 border-border/50">
+                        <FileText className="h-4 w-4" />
+                        Copy
+                      </Button>
+                      <Button variant="outline" size="sm" className="flex items-center gap-2 bg-muted/50 border-border/50">
+                        <Share2 className="h-4 w-4" />
+                        Share
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+      
+        <ReportGenerator 
+          open={showGenerator} 
+          onOpenChange={setShowGenerator}
+          onReportGenerated={fetchReports}
+        />
+      </div>
+    </div>
+  )
+}

@@ -246,6 +246,55 @@ CREATE POLICY "Users can update own settings" ON public.user_settings
 CREATE POLICY "Users can delete own settings" ON public.user_settings
   FOR DELETE USING (auth.uid() = user_id);
 
+-- Enable RLS for reports tables
+ALTER TABLE public.reports ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.report_shares ENABLE ROW LEVEL SECURITY;
+
+-- Reports policies
+CREATE POLICY "Users can view own reports" ON public.reports
+  FOR SELECT USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can insert own reports" ON public.reports
+  FOR INSERT WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users can update own reports" ON public.reports
+  FOR UPDATE USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can delete own reports" ON public.reports
+  FOR DELETE USING (auth.uid() = user_id);
+
+-- Report shares policies
+CREATE POLICY "Users can view shares of own reports" ON public.report_shares
+  FOR SELECT USING (
+    EXISTS (
+      SELECT 1 FROM public.reports 
+      WHERE reports.id = report_shares.report_id 
+      AND reports.user_id = auth.uid()
+    )
+  );
+
+CREATE POLICY "Users can create shares for own reports" ON public.report_shares
+  FOR INSERT WITH CHECK (
+    EXISTS (
+      SELECT 1 FROM public.reports 
+      WHERE reports.id = report_shares.report_id 
+      AND reports.user_id = auth.uid()
+    )
+  );
+
+CREATE POLICY "Users can delete shares of own reports" ON public.report_shares
+  FOR DELETE USING (
+    EXISTS (
+      SELECT 1 FROM public.reports 
+      WHERE reports.id = report_shares.report_id 
+      AND reports.user_id = auth.uid()
+    )
+  );
+
+-- Public access policy for shared reports (read-only)
+CREATE POLICY "Public can view shared reports" ON public.report_shares
+  FOR SELECT USING (expires_at IS NULL OR expires_at > NOW());
+
 -- Function to handle user creation
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER AS $$
@@ -291,6 +340,45 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 CREATE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
   FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
+
+-- Reports table for AI-generated productivity narratives
+CREATE TABLE public.reports (
+  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  user_id UUID REFERENCES public.users(id) ON DELETE CASCADE NOT NULL,
+  title TEXT NOT NULL,
+  narrative_content TEXT NOT NULL,
+  personal_insights JSONB,
+  achievements JSONB,
+  challenges JSONB,
+  start_date DATE NOT NULL,
+  end_date DATE NOT NULL,
+  report_type TEXT DEFAULT 'monthly' CHECK (report_type IN ('monthly', 'quarterly', 'yearly', 'custom')),
+  ai_generated BOOLEAN DEFAULT TRUE,
+  tone_profile TEXT DEFAULT 'reflective' CHECK (tone_profile IN ('reflective', 'motivational', 'analytical', 'casual')),
+  created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+  updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
+);
+
+-- Report shares table for sharing productivity stories
+CREATE TABLE public.report_shares (
+  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  report_id UUID REFERENCES public.reports(id) ON DELETE CASCADE NOT NULL,
+  share_token TEXT UNIQUE NOT NULL,
+  share_title TEXT,
+  expires_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
+);
+
+-- Create indexes for reports
+CREATE INDEX idx_reports_user_id ON public.reports(user_id);
+CREATE INDEX idx_reports_date_range ON public.reports(start_date, end_date);
+CREATE INDEX idx_reports_type ON public.reports(report_type);
+CREATE INDEX idx_report_shares_token ON public.report_shares(share_token);
+CREATE INDEX idx_report_shares_report_id ON public.report_shares(report_id);
+
+-- Add updated_at trigger for reports
+CREATE TRIGGER update_reports_updated_at BEFORE UPDATE ON public.reports
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 -- Function for full-text search
 CREATE OR REPLACE FUNCTION search_tasks(search_query TEXT, user_uuid UUID)
