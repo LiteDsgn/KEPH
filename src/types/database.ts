@@ -271,45 +271,36 @@ export interface Database {
         Row: {
           id: string
           title: string
-          description: string | null
-          report_type: 'productivity' | 'completion' | 'category_breakdown' | 'time_analysis' | 'custom'
           tone_profile: 'professional' | 'casual' | 'motivational' | 'analytical'
           date_range_start: string
           date_range_end: string
           filters: Json | null
           content: string
           user_id: string
-          is_public: boolean
           created_at: string
           updated_at: string
         }
         Insert: {
           id?: string
           title: string
-          description?: string | null
-          report_type: 'productivity' | 'completion' | 'category_breakdown' | 'time_analysis' | 'custom'
           tone_profile?: 'professional' | 'casual' | 'motivational' | 'analytical'
           date_range_start: string
           date_range_end: string
           filters?: Json | null
           content: string
           user_id: string
-          is_public?: boolean
           created_at?: string
           updated_at?: string
         }
         Update: {
           id?: string
           title?: string
-          description?: string | null
-          report_type?: 'productivity' | 'completion' | 'category_breakdown' | 'time_analysis' | 'custom'
           tone_profile?: 'professional' | 'casual' | 'motivational' | 'analytical'
           date_range_start?: string
           date_range_end?: string
           filters?: Json | null
           content?: string
           user_id?: string
-          is_public?: boolean
           created_at?: string
           updated_at?: string
         }
@@ -317,51 +308,6 @@ export interface Database {
           {
             foreignKeyName: "reports_user_id_fkey"
             columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          }
-        ]
-      }
-      report_shares: {
-        Row: {
-          id: string
-          report_id: string
-          shared_with_user_id: string | null
-          share_token: string | null
-          permissions: 'view' | 'comment'
-          expires_at: string | null
-          created_at: string
-        }
-        Insert: {
-          id?: string
-          report_id: string
-          shared_with_user_id?: string | null
-          share_token?: string | null
-          permissions?: 'view' | 'comment'
-          expires_at?: string | null
-          created_at?: string
-        }
-        Update: {
-          id?: string
-          report_id?: string
-          shared_with_user_id?: string | null
-          share_token?: string | null
-          permissions?: 'view' | 'comment'
-          expires_at?: string | null
-          created_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "report_shares_report_id_fkey"
-            columns: ["report_id"]
-            isOneToOne: false
-            referencedRelation: "reports"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "report_shares_shared_with_user_id_fkey"
-            columns: ["shared_with_user_id"]
             isOneToOne: false
             referencedRelation: "users"
             referencedColumns: ["id"]

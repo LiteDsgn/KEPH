@@ -48,41 +48,28 @@ export interface Notification {
   data: any;
 }
 
-export type ReportType = 'productivity' | 'completion' | 'category_breakdown' | 'time_analysis' | 'custom';
 export type ToneProfile = 'professional' | 'casual' | 'motivational' | 'analytical';
 
 export interface Report {
   id: string;
   title: string;
-  description: string | null;
-  report_type: ReportType;
   tone_profile: ToneProfile;
   date_range_start: string;
   date_range_end: string;
   filters: any;
   content: string;
   user_id: string;
-  is_public: boolean;
   created_at: string;
   updated_at: string;
   totalSubtasks?: number; // New field for total subtasks
   totalUrls?: number; // New field for total URLs
 }
 
-export interface ReportShare {
-  id: string;
-  report_id: string;
-  shared_with_user_id: string | null;
-  share_token: string | null;
-  permissions: 'view' | 'comment';
-  expires_at: string | null;
-  created_at: string;
-}
+
 
 export interface ReportGenerationRequest {
   startDate: Date;
   endDate: Date;
-  reportType: ReportType;
   toneProfile?: ToneProfile;
   customTitle?: string;
 }

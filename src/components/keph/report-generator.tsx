@@ -28,7 +28,7 @@ import {
 import { CalendarIcon, Loader2 } from 'lucide-react'
 import { format } from 'date-fns'
 import { cn } from '@/lib/utils'
-import { ReportType, ToneProfile } from '@/types'
+import { ToneProfile } from '@/types'
 
 interface ReportGeneratorProps {
   open: boolean
@@ -38,7 +38,6 @@ interface ReportGeneratorProps {
 
 export function ReportGenerator({ open, onOpenChange, onReportGenerated }: ReportGeneratorProps) {
   const [title, setTitle] = useState('')
-  const [reportType, setReportType] = useState<ReportType>('productivity')
   const [toneProfile, setToneProfile] = useState<ToneProfile>('professional')
   const [startDate, setStartDate] = useState<Date>()
   const [endDate, setEndDate] = useState<Date>()
@@ -51,20 +50,16 @@ export function ReportGenerator({ open, onOpenChange, onReportGenerated }: Repor
 
     setIsGenerating(true)
     try {
-      const response = await fetch('/api/reports', {
+      const response = await fetch('/api/reports/generate', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           title,
-          report_type: reportType,
-          tone_profile: toneProfile,
-          date_range_start: startDate.toISOString(),
-          date_range_end: endDate.toISOString(),
-          filters: null,
-          content: 'Report content will be generated here...', // Placeholder for now
-          is_public: false,
+          startDate: startDate.toISOString(),
+          endDate: endDate.toISOString(),
+          toneProfile,
         }),
       })
 
@@ -74,7 +69,6 @@ export function ReportGenerator({ open, onOpenChange, onReportGenerated }: Repor
 
       // Reset form
       setTitle('')
-      setReportType('productivity')
       setToneProfile('professional')
       setStartDate(undefined)
       setEndDate(undefined)
@@ -108,36 +102,19 @@ export function ReportGenerator({ open, onOpenChange, onReportGenerated }: Repor
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="grid gap-2">
-              <Label>Report Type</Label>
-              <Select value={reportType} onValueChange={(value: ReportType) => setReportType(value)}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="productivity">Productivity</SelectItem>
-                  <SelectItem value="completion">Completion</SelectItem>
-                  <SelectItem value="category_breakdown">Category Breakdown</SelectItem>
-                  <SelectItem value="time_analysis">Time Analysis</SelectItem>
-                  <SelectItem value="custom">Custom</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="grid gap-2">
-              <Label>Tone Profile</Label>
-              <Select value={toneProfile} onValueChange={(value: ToneProfile) => setToneProfile(value)}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="professional">Professional</SelectItem>
-                  <SelectItem value="casual">Casual</SelectItem>
-                  <SelectItem value="motivational">Motivational</SelectItem>
-                  <SelectItem value="analytical">Analytical</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+          <div className="grid gap-2">
+            <Label>Tone Profile</Label>
+            <Select value={toneProfile} onValueChange={(value: ToneProfile) => setToneProfile(value)}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="professional">Professional</SelectItem>
+                <SelectItem value="casual">Casual</SelectItem>
+                <SelectItem value="motivational">Motivational</SelectItem>
+                <SelectItem value="analytical">Analytical</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="grid gap-2">

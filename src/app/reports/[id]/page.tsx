@@ -5,7 +5,7 @@ import { useParams, useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { ArrowLeft, Share2, Download, Calendar, User } from 'lucide-react'
+import { ArrowLeft, Download, Calendar, User } from 'lucide-react'
 import { Report } from '@/types'
 import { format } from 'date-fns'
 
@@ -37,16 +37,7 @@ export default function ReportDetailPage() {
     }
   }
 
-  const getReportTypeColor = (type: Report['report_type']) => {
-    const colors = {
-      productivity: 'bg-blue-100 text-blue-800',
-      completion: 'bg-green-100 text-green-800',
-      category_breakdown: 'bg-purple-100 text-purple-800',
-      time_analysis: 'bg-orange-100 text-orange-800',
-      custom: 'bg-gray-100 text-gray-800',
-    }
-    return colors[type] || colors.custom
-  }
+
 
   const getToneProfileColor = (tone: Report['tone_profile']) => {
     const colors = {
@@ -87,10 +78,6 @@ export default function ReportDetailPage() {
         </Button>
         <div className="flex-1" />
         <Button variant="outline" size="sm">
-          <Share2 className="h-4 w-4 mr-2" />
-          Share
-        </Button>
-        <Button variant="outline" size="sm">
           <Download className="h-4 w-4 mr-2" />
           Export
         </Button>
@@ -101,22 +88,10 @@ export default function ReportDetailPage() {
           <div className="flex items-start justify-between">
             <div className="space-y-2">
               <CardTitle className="text-2xl">{report.title}</CardTitle>
-              {report.description && (
-                <CardDescription className="text-base">{report.description}</CardDescription>
-              )}
             </div>
-            {report.is_public && (
-              <Badge variant="secondary">
-                <Share2 className="h-3 w-3 mr-1" />
-                Public
-              </Badge>
-            )}
           </div>
           
           <div className="flex flex-wrap gap-2 mt-4">
-            <Badge className={getReportTypeColor(report.report_type)}>
-              {report.report_type.replace('_', ' ')}
-            </Badge>
             <Badge variant="outline" className={getToneProfileColor(report.tone_profile)}>
               {report.tone_profile}
             </Badge>

@@ -29,7 +29,6 @@ export async function GET(request: NextRequest) {
     }
 
     const { searchParams } = new URL(request.url);
-    const reportType = searchParams.get('type');
     const limit = parseInt(searchParams.get('limit') || '10');
     const offset = parseInt(searchParams.get('offset') || '0');
 
@@ -39,10 +38,6 @@ export async function GET(request: NextRequest) {
       .eq('user_id', user.id)
       .order('created_at', { ascending: false })
       .range(offset, offset + limit - 1);
-
-    if (reportType) {
-      query = query.eq('report_type', reportType);
-    }
 
     const { data: reports, error } = await query;
 
@@ -54,19 +49,15 @@ export async function GET(request: NextRequest) {
     // Transform database response to match our types
     const transformedReports: Report[] = reports.map(report => ({
       id: report.id,
-      userId: report.user_id,
       title: report.title,
-      narrativeContent: report.narrative_content,
-      personalInsights: report.personal_insights,
-      achievements: report.achievements,
-      challenges: report.challenges,
-      startDate: new Date(report.start_date),
-      endDate: new Date(report.end_date),
-      reportType: report.report_type as any,
-      aiGenerated: report.ai_generated,
-      toneProfile: report.tone_profile as any,
-      createdAt: new Date(report.created_at),
-      updatedAt: new Date(report.updated_at)
+      tone_profile: report.tone_profile,
+      date_range_start: report.date_range_start,
+      date_range_end: report.date_range_end,
+      filters: report.filters,
+      content: report.content,
+      user_id: report.user_id,
+      created_at: report.created_at,
+      updated_at: report.updated_at
     }));
 
     return NextResponse.json({ reports: transformedReports });
@@ -100,7 +91,7 @@ export async function POST(request: NextRequest) {
 
     const body: Partial<Report> = await request.json();
     
-    if (!body.title || !body.narrativeContent || !body.startDate || !body.endDate) {
+    if (!body.title || !body.content || !body.date_range_start || !body.date_range_end) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
@@ -109,15 +100,11 @@ export async function POST(request: NextRequest) {
       .insert({
         user_id: user.id,
         title: body.title,
-        narrative_content: body.narrativeContent,
-        personal_insights: body.personalInsights || null,
-        achievements: body.achievements || null,
-        challenges: body.challenges || null,
-        start_date: body.startDate.toISOString().split('T')[0],
-        end_date: body.endDate.toISOString().split('T')[0],
-        report_type: body.reportType || 'monthly',
-        ai_generated: body.aiGenerated ?? true,
-        tone_profile: body.toneProfile || 'reflective'
+        content: body.content,
+        date_range_start: body.date_range_start,
+        date_range_end: body.date_range_end,
+        tone_profile: body.tone_profile || 'professional',
+        filters: body.filters || null
       })
       .select()
       .single();
@@ -130,19 +117,15 @@ export async function POST(request: NextRequest) {
     // Transform response
     const transformedReport: Report = {
       id: report.id,
-      userId: report.user_id,
       title: report.title,
-      narrativeContent: report.narrative_content,
-      personalInsights: report.personal_insights,
-      achievements: report.achievements,
-      challenges: report.challenges,
-      startDate: new Date(report.start_date),
-      endDate: new Date(report.end_date),
-      reportType: report.report_type as any,
-      aiGenerated: report.ai_generated,
-      toneProfile: report.tone_profile as any,
-      createdAt: new Date(report.created_at),
-      updatedAt: new Date(report.updated_at)
+      tone_profile: report.tone_profile,
+      date_range_start: report.date_range_start,
+      date_range_end: report.date_range_end,
+      filters: report.filters,
+      content: report.content,
+      user_id: report.user_id,
+      created_at: report.created_at,
+      updated_at: report.updated_at
     };
 
     return NextResponse.json({ report: transformedReport }, { status: 201 });

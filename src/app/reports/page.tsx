@@ -5,10 +5,11 @@ import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Plus, FileText, Share2, Calendar, Filter, BarChart3 } from 'lucide-react'
+import { Plus, FileText, RefreshCw, Calendar, Filter, BarChart3 } from 'lucide-react'
 import { Report } from '@/types'
 import { format } from 'date-fns'
 import { ReportGenerator } from '@/components/keph/report-generator'
+import { supabase } from '@/lib/supabase'
 
 export default function ReportsPage() {
   const router = useRouter()
@@ -16,10 +17,81 @@ export default function ReportsPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [showGenerator, setShowGenerator] = useState(false)
+  const [reportCategories, setReportCategories] = useState<Record<string, string[]>>({})
 
   useEffect(() => {
     fetchReports()
   }, [])
+
+  // Function to fetch task categories for a specific date range
+  const fetchTaskCategories = async (startDate: string, endDate: string): Promise<string[]> => {
+    try {
+      const { data: { user }, error: authError } = await supabase.auth.getUser()
+      if (authError || !user) return []
+
+      const { data: tasks, error } = await supabase
+        .from('tasks')
+        .select(`
+          categories(name)
+        `)
+        .eq('user_id', user.id)
+        .gte('created_at', startDate)
+        .lte('created_at', endDate)
+        .not('categories', 'is', null)
+
+      if (error) {
+        console.error('Error fetching task categories:', error)
+        return []
+      }
+
+      // Extract unique category names
+      const categories = tasks
+        ?.map(task => task.categories?.name)
+        .filter((name): name is string => Boolean(name))
+        .filter((name, index, arr) => arr.indexOf(name) === index) || []
+
+      return categories
+    } catch (error) {
+      console.error('Error fetching task categories:', error)
+      return []
+    }
+  }
+
+  // Function to fetch categories for all reports
+  const fetchAllReportCategories = async (reportsData: Report[]) => {
+    const categoriesMap: Record<string, string[]> = {}
+    
+    for (const report of reportsData) {
+      const categories = await fetchTaskCategories(report.date_range_start, report.date_range_end)
+      categoriesMap[report.id] = categories
+    }
+    
+    setReportCategories(categoriesMap)
+  }
+
+  const handleRegenerateReport = async (reportId: string) => {
+    try {
+      setLoading(true)
+      const response = await fetch(`/api/reports/${reportId}/regenerate`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to regenerate report')
+      }
+
+      // Refresh the reports list
+      await fetchReports()
+    } catch (error) {
+      console.error('Error regenerating report:', error)
+      setError('Failed to regenerate report')
+    } finally {
+      setLoading(false)
+    }
+  }
 
   const fetchReports = async () => {
     try {
@@ -29,14 +101,11 @@ export default function ReportsPage() {
           id: '1',
           user_id: 'user1',
           title: 'My Weekly Productivity Journey',
-          description: 'How I spent my time this week and what I accomplished',
-          report_type: 'productivity',
           tone_profile: 'professional',
           date_range_start: '2024-01-15',
           date_range_end: '2024-01-21',
           filters: { categories: ['work', 'personal'] },
           content: 'What a week January 15-21 has been! I completed 85% of my planned tasks, which feels like a solid achievement. Looking back at how I spent my time this week:\n\n**Week 3 of January - My Task Journey:**\n\n*Monday-Tuesday:* I focused heavily on work projects, knocking out 12 tasks including that big presentation I\'d been putting off. It felt great to finally tackle it head-on.\n\n*Wednesday-Thursday:* I shifted gears to personal organization tasks. Cleaned up my digital workspace and planned out the rest of the month. These smaller wins really added up.\n\n*Friday-Weekend:* I wrapped up loose ends and started preparing for next week. I\'m particularly proud of how I balanced work and personal tasks this week.',
-          is_public: false,
           created_at: '2024-01-22T10:00:00Z',
           updated_at: '2024-01-22T10:00:00Z',
           totalSubtasks: 120,
@@ -46,14 +115,11 @@ export default function ReportsPage() {
           id: '2',
           user_id: 'user1',
           title: 'My February Growth Story',
-          description: 'Reflecting on my task completion journey and personal wins this month',
-          report_type: 'completion',
           tone_profile: 'analytical',
           date_range_start: '2024-01-01',
           date_range_end: '2024-01-31',
           filters: { priority: ['high', 'medium'] },
           content: 'February has been a month of real growth for me! My completion rate improved by 15% compared to January, and I can feel the momentum building.\n\n**How I spent my time this month:**\n\n*Week 1:* I started strong with 22 completed tasks, focusing mainly on setting up systems and routines.\n\n*Week 2:* Hit my stride with 28 tasks completed. This was my most productive week - I found my rhythm with morning planning sessions.\n\n*Week 3:* Maintained consistency with 25 tasks done. I noticed I work best when I batch similar tasks together.\n\n*Week 4:* Finished strong with 30 tasks completed. I\'m really proud of how I pushed through the end-of-month fatigue.',
-          is_public: true,
           created_at: '2024-02-01T09:00:00Z',
           updated_at: '2024-02-01T09:00:00Z',
           totalSubtasks: 80,
@@ -63,14 +129,11 @@ export default function ReportsPage() {
           id: '3',
           user_id: 'user1',
           title: 'My Work Pattern Discoveries',
-          description: 'What I learned about my productivity habits and biggest achievements',
-          report_type: 'category_breakdown',
           tone_profile: 'motivational',
           date_range_start: '2024-01-01',
           date_range_end: '2024-01-31',
           filters: {},
           content: 'I\'ve been reflecting on my work patterns this month, and I\'m genuinely excited about the progress I\'ve made! My work category performance has been consistently improving.\n\n**My biggest wins this month:**\n\n*Week 1:* I established a new morning routine that set the tone for productive days.\n\n*Week 2:* I tackled 3 major projects that I\'d been avoiding - it felt incredible to finally check them off.\n\n*Week 3:* I found my sweet spot for deep work sessions, usually between 9-11 AM when my energy is highest.\n\n*Week 4:* I successfully maintained my momentum even when motivation dipped. That\'s real growth for me!',
-          is_public: false,
           created_at: '2024-02-02T14:30:00Z',
           updated_at: '2024-02-02T14:30:00Z',
           totalSubtasks: 50,
@@ -81,6 +144,17 @@ export default function ReportsPage() {
       // Simulate API delay
       await new Promise(resolve => setTimeout(resolve, 1000))
       setReports(mockReports)
+      
+      // For demo purposes, set mock categories for each report
+      const mockCategories: Record<string, string[]> = {
+        '1': ['work', 'personal', 'learning'],
+        '2': ['work', 'health', 'finance'],
+        '3': ['personal', 'hobbies', 'social']
+      }
+      setReportCategories(mockCategories)
+      
+      // Fetch categories for all reports (commented out for demo)
+      // await fetchAllReportCategories(mockReports)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred')
     } finally {
@@ -88,16 +162,7 @@ export default function ReportsPage() {
     }
   }
 
-  const getReportTypeColor = (type: Report['report_type']) => {
-    const colors = {
-      productivity: 'bg-blue-100 text-blue-800',
-      completion: 'bg-green-100 text-green-800',
-      category_breakdown: 'bg-purple-100 text-purple-800',
-      time_analysis: 'bg-orange-100 text-orange-800',
-      custom: 'bg-gray-100 text-gray-800',
-    }
-    return colors[type] || colors.custom
-  }
+
 
   const getToneProfileColor = (tone: Report['tone_profile']) => {
     const colors = {
@@ -107,6 +172,20 @@ export default function ReportsPage() {
       analytical: 'bg-indigo-100 text-indigo-800',
     }
     return colors[tone]
+  }
+
+  const getCategoryColor = (category: string) => {
+    const colors: Record<string, string> = {
+      work: 'bg-blue-100 text-blue-800',
+      personal: 'bg-green-100 text-green-800',
+      health: 'bg-red-100 text-red-800',
+      learning: 'bg-purple-100 text-purple-800',
+      finance: 'bg-yellow-100 text-yellow-800',
+      social: 'bg-pink-100 text-pink-800',
+      travel: 'bg-indigo-100 text-indigo-800',
+      hobbies: 'bg-orange-100 text-orange-800',
+    }
+    return colors[category.toLowerCase()] || 'bg-gray-100 text-gray-800'
   }
 
   if (loading) {
@@ -204,9 +283,6 @@ export default function ReportsPage() {
                 <div className="text-xs text-muted-foreground mt-1">
                   {format(new Date(report.created_at), 'h:mm a')}
                 </div>
-                <div className="text-xs text-muted-foreground mt-1 capitalize">
-                  {report.report_type.replace('_', ' ')} Report
-                </div>
               </div>
               
               {/* Timeline Line and Dot */}
@@ -277,20 +353,23 @@ export default function ReportsPage() {
                       />
                     </div>
 
-                    {/* Categories Reported (Placeholder - assuming this will be added later) */}
+                    {/* Task Categories from Report Date Range */}
                     <div className="flex flex-wrap gap-2">
-                        <Badge className={getReportTypeColor(report.report_type)}>
-                          {report.report_type.replace('_', ' ')}
-                        </Badge>
+                        {reportCategories[report.id]?.length > 0 ? (
+                          reportCategories[report.id].map((category, idx) => (
+                            <Badge key={idx} className={getCategoryColor(category)}>
+                              {category}
+                            </Badge>
+                          ))
+                        ) : (
+                          <Badge className="bg-gray-100 text-gray-800">
+                            No categories
+                          </Badge>
+                        )}
                         <Badge variant="outline" className={getToneProfileColor(report.tone_profile)}>
                           {report.tone_profile}
                         </Badge>
-                        {report.is_public && (
-                          <Badge variant="secondary" className="flex items-center gap-1">
-                            <Share2 className="h-3 w-3" />
-                            Public
-                          </Badge>
-                        )}
+
                       </div>
 
                     {/* Action Buttons */}
@@ -299,9 +378,14 @@ export default function ReportsPage() {
                         <FileText className="h-4 w-4" />
                         Copy
                       </Button>
-                      <Button variant="outline" size="sm" className="flex items-center gap-2 bg-muted/50 border-border/50">
-                        <Share2 className="h-4 w-4" />
-                        Share
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="flex items-center gap-2 bg-muted/50 border-border/50"
+                        onClick={() => handleRegenerateReport(report.id)}
+                      >
+                        <RefreshCw className="h-4 w-4" />
+                        Regenerate
                       </Button>
                     </div>
                   </CardContent>
