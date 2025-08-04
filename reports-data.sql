@@ -6,7 +6,7 @@
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 -- Create enum types for tone_profile
-CREATE TYPE tone_profile AS ENUM ('professional', 'casual', 'motivational', 'analytical');
+CREATE TYPE tone_profile AS ENUM ('professional', 'casual', 'motivational', 'analytical', 'reflective');
 
 -- Drop existing reports table if it exists (be careful with this in production)
 -- DROP TABLE IF EXISTS public.reports CASCADE;

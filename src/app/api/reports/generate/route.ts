@@ -34,12 +34,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
-    // Fetch tasks for the specified date range with category information
+    // Fetch tasks for the specified date range with category information, subtasks, and URLs
     const { data: tasks, error: tasksError } = await supabase
       .from('tasks')
       .select(`
         *,
-        categories(name)
+        categories(name),
+        subtasks(id, title, completed),
+        task_urls(id, url)
       `)
       .eq('user_id', user.id)
       .gte('created_at', startDate)
@@ -55,6 +57,14 @@ export async function POST(request: NextRequest) {
       title: task.title,
       category: (task.categories as any)?.name,
       status: task.status,
+      notes: task.notes || undefined,
+      subtasks: (task.subtasks as any[])?.map(subtask => ({
+        title: subtask.title,
+        completed: subtask.completed
+      })) || [],
+      urls: (task.task_urls as any[])?.map(url => ({
+        url: url.url
+      })) || []
     }));
 
     // Calculate category statistics
@@ -91,7 +101,7 @@ export async function POST(request: NextRequest) {
       title,
       startDate,
       endDate,
-      toneProfile: toneProfile as 'professional' | 'casual' | 'reflective' | 'motivational',
+      toneProfile: toneProfile as 'professional' | 'casual' | 'analytical' | 'motivational' | 'reflective',
       taskData,
       categoryStats,
     });
@@ -105,7 +115,7 @@ export async function POST(request: NextRequest) {
         content: aiResult.content,
         date_range_start: format(parseISO(startDate), 'yyyy-MM-dd'),
         date_range_end: format(parseISO(endDate), 'yyyy-MM-dd'),
-        tone_profile: toneProfile as 'professional' | 'casual' | 'motivational' | 'analytical',
+        tone_profile: toneProfile as 'professional' | 'casual' | 'motivational' | 'analytical' | 'reflective',
       })
       .select()
       .single();

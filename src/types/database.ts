@@ -271,7 +271,7 @@ export interface Database {
         Row: {
           id: string
           title: string
-          tone_profile: 'professional' | 'casual' | 'motivational' | 'analytical'
+          tone_profile: 'professional' | 'casual' | 'motivational' | 'analytical' | 'reflective'
           date_range_start: string
           date_range_end: string
           filters: Json | null
@@ -283,7 +283,7 @@ export interface Database {
         Insert: {
           id?: string
           title: string
-          tone_profile?: 'professional' | 'casual' | 'motivational' | 'analytical'
+          tone_profile?: 'professional' | 'casual' | 'motivational' | 'analytical' | 'reflective'
           date_range_start: string
           date_range_end: string
           filters?: Json | null
@@ -295,7 +295,7 @@ export interface Database {
         Update: {
           id?: string
           title?: string
-          tone_profile?: 'professional' | 'casual' | 'motivational' | 'analytical'
+          tone_profile?: 'professional' | 'casual' | 'motivational' | 'analytical' | 'reflective'
           date_range_start?: string
           date_range_end?: string
           filters?: Json | null

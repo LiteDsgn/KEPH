@@ -48,7 +48,7 @@ export interface Notification {
   data: any;
 }
 
-export type ToneProfile = 'professional' | 'casual' | 'motivational' | 'analytical';
+export type ToneProfile = 'professional' | 'casual' | 'motivational' | 'analytical' | 'reflective';
 
 export interface Report {
   id: string;

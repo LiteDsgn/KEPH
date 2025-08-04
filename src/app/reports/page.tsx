@@ -170,6 +170,7 @@ export default function ReportsPage() {
       casual: 'bg-yellow-100 text-yellow-800',
       motivational: 'bg-pink-100 text-pink-800',
       analytical: 'bg-indigo-100 text-indigo-800',
+      reflective: 'bg-purple-100 text-purple-800',
     }
     return colors[tone]
   }

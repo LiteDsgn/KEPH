@@ -47,12 +47,14 @@ export async function POST(
     const startDate = existingReport.date_range_start;
     const endDate = existingReport.date_range_end;
 
-    // Fetch tasks for the same date range with category information
+    // Fetch tasks for the same date range with category information, subtasks, and URLs
     const { data: tasks, error: tasksError } = await supabase
       .from('tasks')
       .select(`
         *,
-        categories(name)
+        categories(name),
+        subtasks(id, title, completed),
+        task_urls(id, url)
       `)
       .eq('user_id', user.id)
       .gte('created_at', startDate)
@@ -68,6 +70,14 @@ export async function POST(
       title: task.title,
       category: (task.categories as any)?.name,
       status: task.status,
+      notes: task.notes || undefined,
+      subtasks: (task.subtasks as any[])?.map(subtask => ({
+        title: subtask.title,
+        completed: subtask.completed,
+      })) || [],
+      urls: (task.task_urls as any[])?.map(url => ({
+        url: url.url,
+      })) || [],
     }));
 
     // Calculate category statistics
@@ -104,7 +114,7 @@ export async function POST(
       title: existingReport.title,
       startDate,
       endDate,
-      toneProfile: existingReport.tone_profile as 'professional' | 'casual' | 'reflective' | 'motivational',
+      toneProfile: existingReport.tone_profile as 'professional' | 'casual' | 'analytical' | 'motivational' | 'reflective',
       taskData,
       categoryStats,
     });

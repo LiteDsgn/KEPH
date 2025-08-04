@@ -113,6 +113,7 @@ export function ReportGenerator({ open, onOpenChange, onReportGenerated }: Repor
                 <SelectItem value="casual">Casual</SelectItem>
                 <SelectItem value="motivational">Motivational</SelectItem>
                 <SelectItem value="analytical">Analytical</SelectItem>
+                <SelectItem value="reflective">Reflective</SelectItem>
               </SelectContent>
             </Select>
           </div>
