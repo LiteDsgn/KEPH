@@ -28,6 +28,7 @@ import {
 import { CalendarIcon, Loader2 } from 'lucide-react'
 import { format } from 'date-fns'
 import { cn } from '@/lib/utils'
+import { useToast } from '@/hooks/use-toast'
 import { ToneProfile } from '@/types'
 
 interface ReportGeneratorProps {
@@ -37,6 +38,7 @@ interface ReportGeneratorProps {
 }
 
 export function ReportGenerator({ open, onOpenChange, onReportGenerated }: ReportGeneratorProps) {
+  const { toast } = useToast()
   const [title, setTitle] = useState('')
   const [toneProfile, setToneProfile] = useState<ToneProfile>('professional')
   const [startDate, setStartDate] = useState<Date>()
@@ -55,6 +57,7 @@ export function ReportGenerator({ open, onOpenChange, onReportGenerated }: Repor
         headers: {
           'Content-Type': 'application/json',
         },
+        credentials: 'include', // Include cookies for authentication
         body: JSON.stringify({
           title,
           startDate: startDate.toISOString(),
@@ -64,7 +67,8 @@ export function ReportGenerator({ open, onOpenChange, onReportGenerated }: Repor
       })
 
       if (!response.ok) {
-        throw new Error('Failed to generate report')
+        const errorData = await response.json()
+        throw new Error(errorData.details || errorData.error || 'Failed to generate report')
       }
 
       // Reset form
@@ -77,6 +81,11 @@ export function ReportGenerator({ open, onOpenChange, onReportGenerated }: Repor
       onReportGenerated?.()
     } catch (error) {
       console.error('Error generating report:', error)
+      toast({
+        title: 'Error',
+        description: 'Failed to generate report. Please try again.',
+        variant: 'destructive',
+      })
     } finally {
       setIsGenerating(false)
     }

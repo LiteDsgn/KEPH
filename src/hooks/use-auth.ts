@@ -104,14 +104,32 @@ export function useAuth() {
     try {
       setAuthState(prev => ({ ...prev, loading: true, error: null }));
       
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+        credentials: 'include'
       });
 
-      if (error) throw error;
+      if (!response.ok) {
+        const { error } = await response.json();
+        throw new Error(error);
+      }
 
-      return { data, error: null };
+      const { user } = await response.json();
+
+      // Refresh client session
+      const { data: { session } } = await supabase.auth.getSession();
+
+      setAuthState(prev => ({
+        ...prev,
+        user,
+        session,
+        loading: false,
+        error: null
+      }));
+
+      return { data: { user, session }, error: null };
     } catch (error: any) {
       const errorMessage = error.message || 'Failed to sign in';
       setAuthState(prev => ({ ...prev, loading: false, error: errorMessage }));

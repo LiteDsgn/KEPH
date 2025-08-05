@@ -1,4 +1,4 @@
-import { createClient } from '@supabase/supabase-js';
+import { createBrowserClient } from '@supabase/ssr';
 import type { Database } from '@/types/database';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
@@ -8,7 +8,23 @@ if (!supabaseUrl || !supabaseAnonKey) {
   throw new Error('Missing Supabase environment variables');
 }
 
-export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
+export const supabase = createBrowserClient<Database>(supabaseUrl, supabaseAnonKey, {
+  cookies: {
+    get: (key) => {
+      if (typeof window === 'undefined') return undefined;
+      const cookies = document.cookie ? document.cookie.split('; ') : [];
+      const cookie = cookies.find(c => c.startsWith(`${key}=`));
+      return cookie ? decodeURIComponent(cookie.split('=')[1]) : undefined;
+    },
+    set: (key, value, options) => {
+      if (typeof window === 'undefined') return;
+      document.cookie = `${key}=${encodeURIComponent(value)}; ${Object.entries(options).map(([k, v]) => `${k}=${v}`).join('; ')}`;
+    },
+    remove: (key, options) => {
+      if (typeof window === 'undefined') return;
+      document.cookie = `${key}=; Max-Age=0; ${Object.entries(options).map(([k, v]) => `${k}=${v}`).join('; ')}`;
+    },
+  },
   auth: {
     autoRefreshToken: true,
     persistSession: true,

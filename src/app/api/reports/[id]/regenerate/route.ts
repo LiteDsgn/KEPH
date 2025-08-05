@@ -19,15 +19,30 @@ export async function POST(
       {
         cookies: {
           get(name: string) {
-            return cookieStore.get(name)?.value
+            return cookieStore.get(name)?.value;
+          },
+          set(name: string, value: string, options: any) {
+            cookieStore.set({ name, value, ...options });
+          },
+          remove(name: string, options: any) {
+            cookieStore.set({ name, value: '', ...options });
           },
         },
       }
     );
     
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    let { data: { user }, error: authError } = await supabase.auth.getUser();
+    console.log('Initial auth check:', { userId: user?.id, authError });
+    
     if (authError || !user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      const { data: refreshed, error: refreshError } = await supabase.auth.refreshSession();
+      console.log('Refresh result:', { refreshedUserId: refreshed?.user?.id, refreshError });
+      
+      if (refreshError || !refreshed?.user) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      }
+      
+      user = refreshed.user;
     }
 
     const reportId = params.id;

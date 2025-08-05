@@ -63,6 +63,8 @@ export interface Report {
   updated_at: string;
   totalSubtasks?: number; // New field for total subtasks
   totalUrls?: number; // New field for total URLs
+  completedTasks?: number; // New field for completed tasks count
+  completionRate?: number; // New field for completion rate percentage
 }
 
 

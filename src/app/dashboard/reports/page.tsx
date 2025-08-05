@@ -9,6 +9,7 @@ import { Plus, FileText, RefreshCw, Calendar, Filter, BarChart3 } from 'lucide-r
 import { Report } from '@/types'
 import { format } from 'date-fns'
 import { ReportGenerator } from '@/components/keph/report-generator'
+
 import { supabase } from '@/lib/supabase'
 
 export default function ReportsPage() {
@@ -17,6 +18,7 @@ export default function ReportsPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [showGenerator, setShowGenerator] = useState(false)
+
   const [reportCategories, setReportCategories] = useState<Record<string, string[]>>({})
 
   useEffect(() => {
@@ -77,10 +79,12 @@ export default function ReportsPage() {
         headers: {
           'Content-Type': 'application/json',
         },
+        credentials: 'include', // Include cookies for authentication
       })
 
       if (!response.ok) {
-        throw new Error('Failed to regenerate report')
+        const errorData = await response.json()
+        throw new Error(errorData.details || errorData.error || 'Failed to regenerate report')
       }
 
       // Refresh the reports list
@@ -95,30 +99,30 @@ export default function ReportsPage() {
 
   const fetchReports = async () => {
     try {
-      const { data: { user }, error: authError } = await supabase.auth.getUser()
-      if (authError || !user) {
-        setError('Authentication required')
-        return
+      const response = await fetch('/api/reports', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include', // Include cookies for authentication
+      })
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          setError('Authentication required')
+          return
+        }
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Failed to fetch reports')
       }
 
-      const { data: reportsData, error } = await supabase
-        .from('reports')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false })
-
-      if (error) {
-        console.error('Error fetching reports:', error)
-        setError('Failed to fetch reports')
-        return
-      }
-
-      setReports(reportsData || [])
-      
-      // Fetch categories for all reports
-      if (reportsData && reportsData.length > 0) {
-        await fetchAllReportCategories(reportsData)
-      }
+      const data = await response.json()
+       setReports(data.reports || [])
+       
+       // Fetch categories for all reports
+       if (data.reports && data.reports.length > 0) {
+         await fetchAllReportCategories(data.reports)
+       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred')
     } finally {
@@ -212,6 +216,7 @@ export default function ReportsPage() {
                   <Filter className="h-4 w-4" />
                   Search
                 </Button>
+
                 <Button className="flex items-center gap-2" onClick={() => setShowGenerator(true)}>
                   <Plus className="h-4 w-4" />
                   Generate
@@ -282,11 +287,11 @@ export default function ReportsPage() {
                     {/* Stats Grid */}
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                       <div className="text-center p-3 bg-muted/50 rounded-lg">
-                        <div className="text-2xl font-bold text-primary">N/A</div>
+                        <div className="text-2xl font-bold text-primary">{report.completionRate || 0}%</div>
                         <div className="text-xs text-muted-foreground">Completion Rate</div>
                       </div>
                       <div className="text-center p-3 bg-muted/50 rounded-lg">
-                        <div className="text-2xl font-bold text-green-600">N/A</div>
+                        <div className="text-2xl font-bold text-green-600">{report.completedTasks || 0}</div>
                         <div className="text-xs text-muted-foreground">Tasks Completed</div>
                       </div>
                       <div className="text-center p-3 bg-muted/50 rounded-lg">
@@ -366,6 +371,8 @@ export default function ReportsPage() {
           onOpenChange={setShowGenerator}
           onReportGenerated={fetchReports}
         />
+        
+
       </div>
     </div>
   )

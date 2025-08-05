@@ -120,7 +120,7 @@ Category Breakdown:
 
 Task Details:
 {{#each taskData}}
-- {{title}}{{#if category}} ({{category}}){{/if}} - {{#if (eq status 'completed')}}✅ Completed{{else if (eq status 'current')}}🔄 Current{{else}}⏳ Pending{{/if}}
+- {{title}}{{#if category}} ({{category}}){{/if}} - Status: {{status}}
 {{#if notes}}  Notes: {{notes}}{{/if}}
 {{#if subtasks.length}}  Subtasks ({{subtasks.length}}): {{#each subtasks}}{{#if completed}}✅{{else}}⏳{{/if}} {{title}}{{#unless @last}}, {{/unless}}{{/each}}{{/if}}
 {{#if urls.length}}  Resources: {{#each urls}}{{url}}{{#unless @last}}, {{/unless}}{{/each}}{{/if}}

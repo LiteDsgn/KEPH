@@ -17,15 +17,30 @@ export async function GET(request: NextRequest) {
       {
         cookies: {
           get(name: string) {
-            return cookieStore.get(name)?.value
+            return cookieStore.get(name)?.value;
+          },
+          set(name: string, value: string, options: any) {
+            cookieStore.set({ name, value, ...options });
+          },
+          remove(name: string, options: any) {
+            cookieStore.set({ name, value: '', ...options });
           },
         },
       }
     );
     
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    let { data: { user }, error: authError } = await supabase.auth.getUser();
+    console.log('Initial auth check:', { userId: user?.id, authError });
+    
     if (authError || !user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      const { data: refreshed, error: refreshError } = await supabase.auth.refreshSession();
+      console.log('Refresh result:', { refreshedUserId: refreshed?.user?.id, refreshError });
+      
+      if (refreshError || !refreshed?.user) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      }
+      
+      user = refreshed.user;
     }
 
     const { searchParams } = new URL(request.url);
@@ -46,18 +61,68 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Failed to fetch reports' }, { status: 500 });
     }
 
-    // Transform database response to match our types
-    const transformedReports: Report[] = reports.map(report => ({
-      id: report.id,
-      title: report.title,
-      tone_profile: report.tone_profile,
-      date_range_start: report.date_range_start,
-      date_range_end: report.date_range_end,
-      filters: report.filters,
-      content: report.content,
-      user_id: report.user_id,
-      created_at: report.created_at,
-      updated_at: report.updated_at
+    // Transform database response to match our types and calculate statistics
+    const transformedReports: Report[] = await Promise.all(reports.map(async (report) => {
+      // Fetch tasks for this report's date range to calculate statistics
+      const { data: tasks, error: tasksError } = await supabase
+        .from('tasks')
+        .select(`
+          id,
+          title,
+          status,
+          notes,
+          categories (name)
+        `)
+        .eq('user_id', user.id)
+        .gte('created_at', report.date_range_start)
+        .lte('created_at', report.date_range_end);
+
+      let totalSubtasks = 0;
+      let totalUrls = 0;
+      let completedTasks = 0;
+      let completionRate = 0;
+
+      if (tasks && !tasksError) {
+        completedTasks = tasks.filter(task => task.status === 'completed').length;
+        completionRate = tasks.length > 0 ? Math.round((completedTasks / tasks.length) * 100) : 0;
+        
+        // Get task IDs for counting subtasks and URLs
+        const taskIds = tasks.map(task => task.id);
+        
+        if (taskIds.length > 0) {
+          // Count subtasks
+          const { count: subtasksCount } = await supabase
+            .from('subtasks')
+            .select('*', { count: 'exact', head: true })
+            .in('task_id', taskIds);
+          
+          // Count URLs
+          const { count: urlsCount } = await supabase
+            .from('task_urls')
+            .select('*', { count: 'exact', head: true })
+            .in('task_id', taskIds);
+          
+          totalSubtasks = subtasksCount || 0;
+          totalUrls = urlsCount || 0;
+        }
+      }
+
+      return {
+        id: report.id,
+        title: report.title,
+        tone_profile: report.tone_profile,
+        date_range_start: report.date_range_start,
+        date_range_end: report.date_range_end,
+        filters: report.filters,
+        content: report.content,
+        user_id: report.user_id,
+        created_at: report.created_at,
+        updated_at: report.updated_at,
+        totalSubtasks,
+        totalUrls,
+        completedTasks,
+        completionRate
+      };
     }));
 
     return NextResponse.json({ reports: transformedReports });
@@ -78,15 +143,30 @@ export async function POST(request: NextRequest) {
       {
         cookies: {
           get(name: string) {
-            return cookieStore.get(name)?.value
+            return cookieStore.get(name)?.value;
+          },
+          set(name: string, value: string, options: any) {
+            cookieStore.set({ name, value, ...options });
+          },
+          remove(name: string, options: any) {
+            cookieStore.set({ name, value: '', ...options });
           },
         },
       }
     );
     
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    let { data: { user }, error: authError } = await supabase.auth.getUser();
+    console.log('Initial auth check:', { userId: user?.id, authError });
+    
     if (authError || !user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      const { data: refreshed, error: refreshError } = await supabase.auth.refreshSession();
+      console.log('Refresh result:', { refreshedUserId: refreshed?.user?.id, refreshError });
+      
+      if (refreshError || !refreshed?.user) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      }
+      
+      user = refreshed.user;
     }
 
     const body: Partial<Report> = await request.json();

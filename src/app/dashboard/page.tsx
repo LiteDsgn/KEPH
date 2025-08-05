@@ -332,7 +332,7 @@ export default function DashboardPage() {
                   <span className="sr-only">Manage Categories</span>
                 </Button>
                 
-                <Button variant="ghost" size="icon" onClick={() => router.push('/reports')} className="rounded-full transition-all duration-200 hover:bg-accent/50">
+                <Button variant="ghost" size="icon" onClick={() => router.push('/dashboard/reports')} className="rounded-full transition-all duration-200 hover:bg-accent/50">
                   <BarChart3 className="h-5 w-5" />
                   <span className="sr-only">View Reports</span>
                 </Button>
@@ -371,11 +371,11 @@ export default function DashboardPage() {
                       </div>
                     </DropdownMenuLabel>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem className="cursor-pointer" onClick={() => { router.push('/profile'); setDropdownOpen(false); }}>
+                    <DropdownMenuItem className="cursor-pointer" onClick={() => { router.push('/dashboard/profile'); setDropdownOpen(false); }}>
                       <User className="mr-2 h-4 w-4" />
                       <span>Profile</span>
                     </DropdownMenuItem>
-                    <DropdownMenuItem className="cursor-pointer" onClick={() => { router.push('/settings'); setDropdownOpen(false); }}>
+                    <DropdownMenuItem className="cursor-pointer" onClick={() => { router.push('/dashboard/settings'); setDropdownOpen(false); }}>
                       <Settings className="mr-2 h-4 w-4" />
                       <span>Settings</span>
                     </DropdownMenuItem>

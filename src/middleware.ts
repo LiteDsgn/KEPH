@@ -44,8 +44,10 @@ export async function middleware(request: NextRequest) {
     }
   );
 
+  console.log('Middleware cookies:', request.cookies.getAll().map(c => `${c.name}: ${c.value}`));
   // Refresh session if expired - required for Server Components
-  await supabase.auth.getUser();
+  const { data: { session } } = await supabase.auth.getSession();
+  console.log('Middleware session:', session ? 'Valid session' : 'No session');
 
   return response;
 }
