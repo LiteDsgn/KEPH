@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useAuth } from '@/hooks/use-auth';
 import { AuthForm } from './auth-form';
 import { Loader2 } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 
 interface AuthGuardProps {
   children: React.ReactNode;
@@ -13,6 +14,7 @@ interface AuthGuardProps {
 export function AuthGuard({ children, fallback }: AuthGuardProps) {
   const { user, loading, isAuthenticated } = useAuth();
   const [showAuth, setShowAuth] = useState(false);
+  const router = useRouter();
 
   useEffect(() => {
     if (!loading && !isAuthenticated) {
@@ -21,6 +23,12 @@ export function AuthGuard({ children, fallback }: AuthGuardProps) {
       setShowAuth(false);
     }
   }, [loading, isAuthenticated]);
+
+  const handleAuthSuccess = () => {
+    setShowAuth(false);
+    // Force a page refresh to ensure proper state sync
+    window.location.reload();
+  };
 
   // Show loading spinner while checking authentication
   if (loading) {
@@ -40,7 +48,7 @@ export function AuthGuard({ children, fallback }: AuthGuardProps) {
   if (showAuth && !isAuthenticated) {
     return (
       <AuthForm 
-        onSuccess={() => setShowAuth(false)}
+        onSuccess={handleAuthSuccess}
       />
     );
   }

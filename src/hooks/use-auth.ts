@@ -57,13 +57,19 @@ export function useAuth() {
           error: null
         });
 
-        // Clear any cached data when user logs out
-        if (event === 'SIGNED_OUT') {
+        // Handle different auth events
+        if (event === 'SIGNED_IN') {
+          console.log('User signed in successfully:', session?.user?.email);
+        } else if (event === 'SIGNED_OUT') {
+          console.log('User signed out');
+          // Clear any cached data when user logs out
           if (typeof window !== 'undefined') {
             localStorage.removeItem('supabase-tasks-cache');
             localStorage.removeItem('supabase-categories-cache');
             localStorage.removeItem('supabase-last-sync');
           }
+        } else if (event === 'TOKEN_REFRESHED') {
+          console.log('Token refreshed for user:', session?.user?.email);
         }
       }
     );
@@ -118,18 +124,22 @@ export function useAuth() {
 
       const { user } = await response.json();
 
-      // Refresh client session
-      const { data: { session } } = await supabase.auth.getSession();
+      // Refresh client session to ensure sync
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError) {
+        console.error('Session refresh error:', sessionError);
+      }
 
       setAuthState(prev => ({
         ...prev,
-        user,
+        user: session?.user || user,
         session,
         loading: false,
         error: null
       }));
 
-      return { data: { user, session }, error: null };
+      return { data: { user: session?.user || user, session }, error: null };
     } catch (error: any) {
       const errorMessage = error.message || 'Failed to sign in';
       setAuthState(prev => ({ ...prev, loading: false, error: errorMessage }));
@@ -145,12 +155,21 @@ export function useAuth() {
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/auth/callback`
+          redirectTo: `${window.location.origin}/auth/callback`,
+          queryParams: {
+            access_type: 'offline',
+            prompt: 'consent',
+          }
         }
       });
 
-      if (error) throw error;
+      if (error) {
+        setAuthState(prev => ({ ...prev, loading: false, error: error.message }));
+        throw error;
+      }
 
+      // Note: For OAuth, the actual authentication happens in the callback
+      // The loading state will be reset by the auth state change listener
       return { data, error: null };
     } catch (error: any) {
       const errorMessage = error.message || 'Failed to sign in with Google';

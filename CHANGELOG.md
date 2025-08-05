@@ -36,6 +36,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Report Analytics Integration**: Connected reports with task analytics for comprehensive productivity insights and trend analysis
 
 ### Fixed
+- **Authentication Flow**: Fixed various issues in the authentication flow, including redirects, session handling, and middleware bypasses.
 - **Reports Data Rendering Issue**: Fixed reports dashboard not displaying calculated statistics (completion rate, completed tasks) by updating frontend to use API endpoint instead of direct Supabase queries
 - **Report Statistics Calculation**: Enhanced `/api/reports` endpoint to properly calculate and return `totalSubtasks`, `totalUrls`, `completedTasks`, and `completionRate` for each report
 - **Report Type Interface**: Updated `Report` interface in TypeScript to include `completedTasks` and `completionRate` fields for proper type safety

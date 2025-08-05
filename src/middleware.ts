@@ -44,12 +44,28 @@ export async function middleware(request: NextRequest) {
     }
   );
 
-  console.log('Middleware cookies:', request.cookies.getAll().map(c => `${c.name}: ${c.value}`));
-  // Refresh session if expired - required for Server Components
-  const { data: { session } } = await supabase.auth.getSession();
-  console.log('Middleware session:', session ? 'Valid session' : 'No session');
+  console.log('Middleware - Path:', request.nextUrl.pathname);
+  console.log('Middleware - Cookies:', request.cookies.getAll().map(c => `${c.name}=${c.value.substring(0, 20)}...`));
 
-  return response;
+  // Skip middleware for static files, API routes, and auth routes
+  if (request.nextUrl.pathname.startsWith('/_next') ||
+      request.nextUrl.pathname.startsWith('/api') ||
+      request.nextUrl.pathname.startsWith('/auth') ||
+      request.nextUrl.pathname.includes('.') ||
+      request.nextUrl.pathname.startsWith('/@vite')) {
+    return response;
+  }
+
+  try {
+    const { data: { user }, error } = await supabase.auth.getUser();
+    
+    console.log('Middleware session:', user ? 'Valid session' : 'No session', error ? `Error: ${error.message}` : '');
+    
+    return response;
+  } catch (error) {
+    console.error('Middleware error:', error);
+    return response;
+  }
 }
 
 export const config = {
