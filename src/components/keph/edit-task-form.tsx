@@ -169,12 +169,21 @@ export function EditTaskForm({ task, onSubmit, onCancel, categories, onAddCatego
           description: 'The AI could not generate any subtasks from your prompt.'
         });
       }
-    } catch(error) {
+    } catch(error: any) {
       console.error("Error generating subtasks:", error);
+      
+      let errorMessage = 'An error occurred while generating subtasks. Please try again.';
+      
+      if (error?.message?.includes('429') || error?.message?.includes('quota')) {
+        errorMessage = 'AI is busy right now (Quota limit). Please wait a moment and try again.';
+      } else if (error?.message?.includes('network') || error?.message?.includes('fetch')) {
+        errorMessage = 'Network error. Please check your connection and try again.';
+      }
+
       toast({
         variant: 'destructive',
         title: 'Generation Failed',
-        description: 'An error occurred while generating subtasks. Please try again.',
+        description: errorMessage,
       });
     } finally {
       setIsGenerating(false);

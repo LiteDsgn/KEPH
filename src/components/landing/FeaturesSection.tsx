@@ -4,11 +4,15 @@ import { FeatureCard } from '@/components/landing/FeatureCard';
 
 export function FeaturesSection() {
   return (
-    <section id="features" className="py-24 sm:py-32">
-      <div className="container mx-auto px-4 sm:px-6">
-        <div className="text-center max-w-3xl mx-auto mb-16">
-          <h2 className="text-4xl sm:text-5xl lg:text-6xl font-bold font-headline mb-6">Everything you need to stay organized</h2>
-          <p className="text-xl sm:text-2xl text-muted-foreground leading-relaxed">KEPH combines powerful AI with intuitive design to create the ultimate productivity companion.</p>
+    <section id="features" className="py-24 sm:py-32 relative overflow-hidden bg-[#0D0D0D]">
+      {/* Background decoration */}
+      <div className="absolute top-0 right-0 w-full h-full max-w-4xl max-h-[800px] bg-primary/5 blur-[120px] rounded-full -translate-y-1/2 translate-x-1/2 pointer-events-none" />
+      
+      <div className="container mx-auto px-4 sm:px-6 relative z-10">
+        <div className="text-center max-w-3xl mx-auto mb-16 lg:mb-24">
+          <div className="inline-block bg-primary/10 text-primary text-xs font-bold px-3 py-1 rounded-full mb-4 tracking-wider uppercase">Capabilities</div>
+          <h2 className="text-4xl sm:text-5xl lg:text-7xl font-bold font-headline mb-6 tracking-tight">Everything you need to stay organized</h2>
+          <p className="text-xl sm:text-2xl text-muted-foreground leading-relaxed max-w-2xl mx-auto">KEPH combines powerful AI with intuitive design to create the ultimate productivity companion.</p>
         </div>
         <div className="space-y-8">
           <div className="grid grid-cols-1 md:grid-cols-5 gap-8">

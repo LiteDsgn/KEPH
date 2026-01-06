@@ -44,8 +44,9 @@ export async function middleware(request: NextRequest) {
     }
   );
 
-  console.log('Middleware - Path:', request.nextUrl.pathname);
-  console.log('Middleware - Cookies:', request.cookies.getAll().map(c => `${c.name}=${c.value.substring(0, 20)}...`));
+  // Remove excessive logging for performance
+  // console.log('Middleware - Path:', request.nextUrl.pathname);
+  // console.log('Middleware - Cookies:', request.cookies.getAll().map(c => `${c.name}=${c.value.substring(0, 20)}...`));
 
   // Skip middleware for static files, API routes, and auth routes
   if (request.nextUrl.pathname.startsWith('/_next') ||
@@ -59,7 +60,7 @@ export async function middleware(request: NextRequest) {
   try {
     const { data: { user }, error } = await supabase.auth.getUser();
     
-    console.log('Middleware session:', user ? 'Valid session' : 'No session', error ? `Error: ${error.message}` : '');
+    // console.log('Middleware session:', user ? 'Valid session' : 'No session', error ? `Error: ${error.message}` : '');
     
     return response;
   } catch (error) {

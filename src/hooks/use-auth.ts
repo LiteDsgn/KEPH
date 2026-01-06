@@ -48,7 +48,7 @@ export function useAuth() {
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        console.log('Auth state changed:', event, session?.user?.email);
+        // console.log('Auth state changed:', event, session?.user?.email);
         
         setAuthState({
           user: session?.user ?? null,
@@ -59,9 +59,9 @@ export function useAuth() {
 
         // Handle different auth events
         if (event === 'SIGNED_IN') {
-          console.log('User signed in successfully:', session?.user?.email);
+          // console.log('User signed in successfully:', session?.user?.email);
         } else if (event === 'SIGNED_OUT') {
-          console.log('User signed out');
+          // console.log('User signed out');
           // Clear any cached data when user logs out
           if (typeof window !== 'undefined') {
             localStorage.removeItem('supabase-tasks-cache');
@@ -69,7 +69,7 @@ export function useAuth() {
             localStorage.removeItem('supabase-last-sync');
           }
         } else if (event === 'TOKEN_REFRESHED') {
-          console.log('Token refreshed for user:', session?.user?.email);
+          // console.log('Token refreshed for user:', session?.user?.email);
         }
       }
     );

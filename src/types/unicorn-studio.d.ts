@@ -4,6 +4,7 @@ declare global {
     UnicornStudio: {
       isInitialized: boolean;
       init(): void;
+      destroy(): void;
     };
   }
 }

@@ -178,53 +178,54 @@ export default function ReportsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background to-muted/50 font-body">
-      <div className="container max-w-4xl mx-auto py-8 px-4">
-        <div className="flex items-center gap-4 mb-8">
+    <div className="min-h-screen bg-background font-body">
+      <div className="container max-w-4xl mx-auto py-12 px-4">
+        <div className="flex items-center gap-4 mb-12">
           <Button 
             variant="ghost" 
-            className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
+            className="group flex items-center gap-2 text-muted-foreground hover:text-primary transition-all duration-300 px-0"
             onClick={() => router.push('/dashboard')}
           >
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-arrow-left h-4 w-4">
-              <path d="m12 19-7-7 7-7"></path>
-              <path d="M19 12H5"></path>
-            </svg>
-            Back to Dashboard
+            <div className="bg-primary/10 p-2 rounded-full group-hover:bg-primary/20 transition-all duration-300">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-arrow-left h-4 w-4">
+                <path d="m12 19-7-7 7-7"></path>
+                <path d="M19 12H5"></path>
+              </svg>
+            </div>
+            <span className="font-bold text-xs uppercase tracking-wider">Back to Dashboard</span>
           </Button>
         </div>
       
         {/* Page Header */}
-        <Card className="bg-card/60 backdrop-blur-xl border-border/30 shadow-lg mb-8">
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <div className="p-3 rounded-lg bg-primary/10">
-                   <BarChart3 className="h-8 w-8 text-primary" />
-                 </div>
-                <div>
-                  <CardTitle className="text-3xl font-bold font-headline tracking-tight bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
-                    Reports
-                  </CardTitle>
-                  <CardDescription className="text-base text-muted-foreground">
-                    Generate and manage your productivity reports
-                  </CardDescription>
-                </div>
-              </div>
-              <div className="flex items-center gap-3">
-                <Button variant="outline" className="flex items-center gap-2 bg-muted/50 border-border/50">
-                  <Filter className="h-4 w-4" />
-                  Search
-                </Button>
-
-                <Button className="flex items-center gap-2" onClick={() => setShowGenerator(true)}>
-                  <Plus className="h-4 w-4" />
-                  Generate
-                </Button>
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
+          <div className="flex items-center gap-5">
+            <div className="relative group">
+              <div className="absolute inset-0 bg-primary/20 rounded-2xl blur-md group-hover:blur-xl transition-all duration-500" />
+              <div className="relative p-4 rounded-2xl bg-[#0D0D0D] border border-white/[0.08] shadow-2xl">
+                <BarChart3 className="h-8 w-8 text-primary" />
               </div>
             </div>
-          </CardHeader>
-        </Card>
+            <div>
+              <h1 className="text-4xl font-bold font-headline tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white to-white/70">
+                Reports
+              </h1>
+              <p className="text-muted-foreground mt-1 text-lg">
+                Your productivity insights
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+            <Button variant="outline" className="rounded-full bg-white/5 border-white/[0.08] hover:bg-white/10 transition-all duration-300">
+              <Filter className="h-4 w-4 mr-2" />
+              Filter
+            </Button>
+
+            <Button className="rounded-full bg-primary hover:bg-primary/90 shadow-lg shadow-primary/20 transition-all duration-300" onClick={() => setShowGenerator(true)}>
+              <Plus className="h-4 w-4 mr-2" />
+              Generate
+            </Button>
+          </div>
+        </div>
 
       {reports.length === 0 ? (
         <Card className="text-center py-12 bg-card/60 backdrop-blur-xl border-border/30 shadow-lg">

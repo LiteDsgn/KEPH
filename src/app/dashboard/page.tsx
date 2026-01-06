@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, lazy, Suspense } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSupabaseTasks } from '@/hooks/use-supabase-tasks';
 import { useSupabaseCategories } from '@/hooks/use-supabase-categories';
@@ -22,12 +22,14 @@ import { LogOut, User, Settings } from 'lucide-react';
 import { TaskList } from '@/components/keph/task-list';
 import { TaskInputArea } from '@/components/keph/task-input-area';
 import { NotificationPanel } from '@/components/keph/notification-panel';
-import { TextToTasksForm } from '@/components/keph/text-to-tasks-form';
-import { TranscriptToTasksForm } from '@/components/keph/transcript-to-tasks-form';
-import { ManualTaskForm } from '@/components/keph/manual-task-form';
-import { CategoryManager } from '@/components/keph/category-manager';
-import { KeyboardShortcutsDialog } from '@/components/keph/keyboard-shortcuts-dialog';
-import { CommandPalette } from '@/components/keph/command-palette';
+
+// Lazy load heavy components to improve initial load performance
+const TextToTasksForm = lazy(() => import('@/components/keph/text-to-tasks-form').then(m => ({ default: m.TextToTasksForm })));
+const TranscriptToTasksForm = lazy(() => import('@/components/keph/transcript-to-tasks-form').then(m => ({ default: m.TranscriptToTasksForm })));
+const ManualTaskForm = lazy(() => import('@/components/keph/manual-task-form').then(m => ({ default: m.ManualTaskForm })));
+const CategoryManager = lazy(() => import('@/components/keph/category-manager').then(m => ({ default: m.CategoryManager })));
+const KeyboardShortcutsDialog = lazy(() => import('@/components/keph/keyboard-shortcuts-dialog').then(m => ({ default: m.KeyboardShortcutsDialog })));
+const CommandPalette = lazy(() => import('@/components/keph/command-palette').then(m => ({ default: m.CommandPalette })));
 import { FolderKanban, BarChart3 } from 'lucide-react';
 import { BrainCircuit, Bell, FileText, ClipboardList, PlusCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -94,30 +96,16 @@ export default function DashboardPage() {
   const [showCommandPalette, setShowCommandPalette] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [dropdownOpen, setDropdownOpen] = useState(false);
-  const [timezoneTaskStats, setTimezoneTaskStats] = useState<{
-    total: number;
-    completed: number;
-    pending: number;
-    overdue: number;
-  } | null>(null);
+  const [isScrolled, setIsScrolled] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  // Fetch timezone-aware task statistics
   useEffect(() => {
-    const fetchTimezoneStats = async () => {
-      if (user && timezoneHook.timezone && !timezoneHook.isLoading) {
-        try {
-          const taskService = createTimezoneTaskService(user.id, timezoneHook.timezone);
-          const stats = await taskService.getDailyTaskStats();
-          setTimezoneTaskStats(stats);
-        } catch (error) {
-          console.error('Error fetching timezone task stats:', error);
-        }
-      }
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 10);
     };
-
-    fetchTimezoneStats();
-  }, [user, timezoneHook.timezone, timezoneHook.isLoading, tasks]); // Re-fetch when tasks change
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   useEffect(() => {
     setNotifications(prevNotifications => {
@@ -284,82 +272,94 @@ export default function DashboardPage() {
     <Sheet>
       <div className="min-h-screen bg-background font-body">
         {/* Main Navigation Header */}
-        <header className="sticky top-0 z-40 backdrop-blur-xl bg-background/80 border-b border-border/50">
-          <div className="container mx-auto px-4 sm:px-6 py-3 sm:py-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <div className="relative">
-                  <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-accent/20 rounded-2xl blur-sm" />
-                  <BrainCircuit className="relative w-12 h-12 text-primary p-2 bg-card rounded-2xl shadow-lg" />
-                </div>
-                <div className="space-y-1">
-                  <h1 className="text-2xl font-bold font-headline text-primary tracking-tight">KEPH</h1>
-                  <p className="text-sm text-muted-foreground font-medium">Intelligent Productivity</p>
+        <header className="fixed top-0 left-0 right-0 z-50 flex justify-center p-4 pointer-events-none">
+        <div 
+          className={`
+            container mx-auto px-4 sm:px-6 py-2 transition-all duration-300 pointer-events-auto mt-0 max-w-full
+            ${isScrolled 
+              ? 'bg-[#0D0D0D]/40 backdrop-blur-xl border border-white/[0.08] rounded-2xl shadow-[0_8px_32px_-8px_rgba(0,0,0,0.5)]' 
+              : 'bg-transparent border-b border-transparent'
+            }
+          `}
+        >
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="relative group cursor-pointer" onClick={() => router.push('/')}>
+                <div className="absolute inset-0 bg-primary/20 rounded-xl blur-sm transition-all duration-300 group-hover:blur-md" />
+                <div className={`
+                  relative bg-primary/10 rounded-xl flex items-center justify-center ring-1 ring-primary/20 
+                  group-hover:scale-110 transition-all duration-300 shadow-lg shadow-primary/5
+                  ${isScrolled ? 'w-8 h-8' : 'w-10 h-10'}
+                `}>
+                  <BrainCircuit className={`${isScrolled ? 'w-5 h-5' : 'w-6 h-6'} text-primary`} />
                 </div>
               </div>
               
-              <div className="flex items-center gap-3">
-                <div className="hidden md:flex items-center gap-2 px-4 py-2 bg-muted/50 rounded-full">
-                  <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-                  <span className="text-xs font-medium text-muted-foreground">AI Ready</span>
-                </div>
-                
-                {/* Timezone-aware task stats */}
-                {timezoneTaskStats && (
-                  <div className="hidden lg:flex items-center gap-3 px-4 py-2 bg-card/50 rounded-full border border-border/30">
-                    <div className="flex items-center gap-1">
-                      <div className="w-2 h-2 bg-blue-500 rounded-full" />
-                      <span className="text-xs font-medium text-muted-foreground">
-                        {timezoneTaskStats.completed}/{timezoneTaskStats.total} today
-                      </span>
-                    </div>
-                    {timezoneTaskStats.overdue > 0 && (
-                      <div className="flex items-center gap-1">
-                        <div className="w-2 h-2 bg-red-500 rounded-full" />
-                        <span className="text-xs font-medium text-red-600">
-                          {timezoneTaskStats.overdue} overdue
-                        </span>
-                      </div>
-                    )}
-                    <div className="text-xs text-muted-foreground">
-                      {timezoneHook.getTimezoneDisplay()}
-                    </div>
-                  </div>
-                )}
-
-                <Button variant="ghost" size="icon" onClick={() => setShowCategoryManager(true)} className="rounded-full transition-all duration-200 hover:bg-accent/50">
-                  <FolderKanban className="h-5 w-5" />
-                  <span className="sr-only">Manage Categories</span>
+              <div className="flex flex-col opacity-100">
+                <h1 className={`
+                  font-bold font-headline bg-clip-text text-transparent bg-gradient-to-r from-white to-white/70 tracking-tight transition-all duration-300
+                  ${isScrolled ? 'text-xl' : 'text-2xl'}
+                `}>
+                  KEPH
+                </h1>
+              </div>
+            </div>
+            
+            <div className="flex items-center gap-1 sm:gap-2">
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                onClick={() => setShowCategoryManager(true)} 
+                className={`rounded-full transition-all duration-200 hover:bg-white/5 hover:text-primary ${isScrolled ? 'h-8 w-8' : 'h-10 w-10'}`}
+              >
+                <FolderKanban className={`${isScrolled ? 'h-4 w-4' : 'h-5 w-5'}`} />
+                <span className="sr-only">Manage Categories</span>
+              </Button>
+              
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                onClick={() => router.push('/dashboard/reports')} 
+                className={`rounded-full transition-all duration-200 hover:bg-white/5 hover:text-primary ${isScrolled ? 'h-8 w-8' : 'h-10 w-10'}`}
+              >
+                <BarChart3 className={`${isScrolled ? 'h-4 w-4' : 'h-5 w-5'}`} />
+                <span className="sr-only">View Reports</span>
+              </Button>
+              
+              <div className="w-px h-4 bg-white/10 mx-1 hidden sm:block" />
+              
+              <SheetTrigger asChild>
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className={`relative hover:bg-white/5 hover:text-primary rounded-full transition-all duration-200 ${isScrolled ? 'h-8 w-8' : 'h-10 w-10'}`} 
+                  data-sheet-trigger
+                >
+                  <Bell className={`${isScrolled ? 'h-4 w-4' : 'h-5 w-5'}`} />
+                  {notifications.length > 0 && (
+                    <span className="absolute flex items-center justify-center rounded-full bg-primary text-[10px] text-primary-foreground font-bold -top-1 -right-1 h-4 w-4">
+                      {notifications.length}
+                    </span>
+                  )}
                 </Button>
-                
-                <Button variant="ghost" size="icon" onClick={() => router.push('/dashboard/reports')} className="rounded-full transition-all duration-200 hover:bg-accent/50">
-                  <BarChart3 className="h-5 w-5" />
-                  <span className="sr-only">View Reports</span>
-                </Button>
-                
-                <SheetTrigger asChild>
-                  <Button variant="ghost" size="icon" className="relative hover:bg-accent/50 rounded-full transition-all duration-200" data-sheet-trigger>
-                    <Bell className="h-5 w-5" />
-                    {notifications.length > 0 && (
-                      <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-destructive text-xs text-destructive-foreground font-bold animate-bounce">
-                        {notifications.length}
-                      </span>
-                    )}
+              </SheetTrigger>
+              
+              <DropdownMenu open={dropdownOpen} onOpenChange={setDropdownOpen}>
+                <DropdownMenuTrigger asChild>
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className={`relative hover:bg-white/5 rounded-full transition-all duration-200 ${isScrolled ? 'h-8 w-8' : 'h-10 w-10'}`}
+                  >
+                    <Avatar className={`ring-1 ring-white/10 transition-all duration-300 group-hover:ring-primary/50 ${isScrolled ? 'h-6 w-6' : 'h-8 w-8'}`}>
+                      <AvatarImage src={user?.user_metadata?.avatar_url} alt={user?.email || 'User'} />
+                      <AvatarFallback className="bg-gradient-to-br from-primary/20 to-accent/20 text-primary font-semibold text-xs">
+                        {user?.email?.charAt(0).toUpperCase() || 'U'}
+                      </AvatarFallback>
+                    </Avatar>
                   </Button>
-                </SheetTrigger>
-                
-                <DropdownMenu open={dropdownOpen} onOpenChange={setDropdownOpen}>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon" className="relative hover:bg-accent/50 rounded-full transition-all duration-200">
-                      <Avatar className="h-8 w-8">
-                        <AvatarImage src={user?.user_metadata?.avatar_url} alt={user?.email || 'User'} />
-                        <AvatarFallback className="bg-gradient-to-br from-primary/20 to-accent/20 text-primary font-semibold">
-                          {user?.email?.charAt(0).toUpperCase() || 'U'}
-                        </AvatarFallback>
-                      </Avatar>
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-56 bg-card/95 backdrop-blur-xl border-border/50">
+                </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-56 bg-[#0D0D0D]/95 backdrop-blur-xl border-white/[0.08] text-white">
                     <DropdownMenuLabel className="font-normal">
                       <div className="flex flex-col space-y-1">
                         <p className="text-sm font-medium leading-none">
@@ -370,18 +370,18 @@ export default function DashboardPage() {
                         </p>
                       </div>
                     </DropdownMenuLabel>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem className="cursor-pointer" onClick={() => { router.push('/dashboard/profile'); setDropdownOpen(false); }}>
+                    <DropdownMenuSeparator className="bg-white/[0.08]" />
+                    <DropdownMenuItem className="cursor-pointer hover:bg-white/5 transition-colors" onClick={() => { router.push('/dashboard/profile'); setDropdownOpen(false); }}>
                       <User className="mr-2 h-4 w-4" />
                       <span>Profile</span>
                     </DropdownMenuItem>
-                    <DropdownMenuItem className="cursor-pointer" onClick={() => { router.push('/dashboard/settings'); setDropdownOpen(false); }}>
+                    <DropdownMenuItem className="cursor-pointer hover:bg-white/5 transition-colors" onClick={() => { router.push('/dashboard/settings'); setDropdownOpen(false); }}>
                       <Settings className="mr-2 h-4 w-4" />
                       <span>Settings</span>
                     </DropdownMenuItem>
-                    <DropdownMenuSeparator />
+                    <DropdownMenuSeparator className="bg-white/[0.08]" />
                     <DropdownMenuItem 
-                      className="cursor-pointer text-destructive focus:text-destructive"
+                      className="cursor-pointer text-destructive focus:text-destructive hover:bg-destructive/10 transition-colors"
                       onClick={() => { signOut(); setDropdownOpen(false); }}
                     >
                       <LogOut className="mr-2 h-4 w-4" />
@@ -395,7 +395,7 @@ export default function DashboardPage() {
         </header>
 
         {/* Task-Centric Layout */}
-        <main className="container mx-auto px-4 sm:px-6 py-4 sm:py-8 pb-24 sm:pb-32">
+        <main className="container mx-auto px-4 sm:px-6 py-20 sm:py-24 pb-24 sm:pb-32">
           {/* Full-Width Task List */}
           <div className="bg-card/50 backdrop-blur-sm border border-border/30 rounded-2xl sm:rounded-3xl overflow-hidden shadow-xl min-h-[calc(100vh-160px)] sm:min-h-[calc(100vh-200px)]">
             <TaskList
@@ -441,30 +441,34 @@ export default function DashboardPage() {
         )}
         
         {/* Keyboard Shortcuts Dialog */}
-        <KeyboardShortcutsDialog 
-          open={showKeyboardShortcuts} 
-          onOpenChange={setShowKeyboardShortcuts} 
-        />
+        <Suspense fallback={null}>
+          <KeyboardShortcutsDialog 
+            open={showKeyboardShortcuts} 
+            onOpenChange={setShowKeyboardShortcuts} 
+          />
+        </Suspense>
 
         {/* Command Palette */}
-        <CommandPalette
-          open={showCommandPalette}
-          onOpenChange={setShowCommandPalette}
-          onCreateManualTask={() => setActiveModal('manual')}
-          onCreateTextTask={() => setActiveModal('text')}
-          onCreateTranscriptTask={() => setActiveModal('transcript')}
-          onOpenCategoryManager={() => setShowCategoryManager(true)}
-          onOpenNotifications={handleOpenNotifications}
-          onOpenKeyboardShortcuts={() => setShowKeyboardShortcuts(true)}
-          onFocusSearch={handleFocusSearch}
-          tasks={tasks}
-          onUpdateTask={updateTask}
-          onDeleteTask={deleteTask}
-          onDuplicateTask={duplicateTask}
-          selectedCategory={selectedCategory}
-          onSetSelectedCategory={setSelectedCategory}
-          categories={categories}
-        />
+        <Suspense fallback={null}>
+          <CommandPalette
+            open={showCommandPalette}
+            onOpenChange={setShowCommandPalette}
+            onCreateManualTask={() => setActiveModal('manual')}
+            onCreateTextTask={() => setActiveModal('text')}
+            onCreateTranscriptTask={() => setActiveModal('transcript')}
+            onOpenCategoryManager={() => setShowCategoryManager(true)}
+            onOpenNotifications={handleOpenNotifications}
+            onOpenKeyboardShortcuts={() => setShowKeyboardShortcuts(true)}
+            onFocusSearch={handleFocusSearch}
+            tasks={tasks}
+            onUpdateTask={updateTask}
+            onDeleteTask={deleteTask}
+            onDuplicateTask={duplicateTask}
+            selectedCategory={selectedCategory}
+            onSetSelectedCategory={setSelectedCategory}
+            categories={categories}
+          />
+        </Suspense>
 
         <Sheet open={showCategoryManager} onOpenChange={setShowCategoryManager}>
           <SheetContent className={`w-full sm:max-w-lg p-0 flex flex-col border-0 bg-gradient-to-br from-background/95 to-muted/50 backdrop-blur-xl shadow-2xl ${sheetSide === 'bottom' ? 'h-[80vh] rounded-t-3xl' : 'h-full rounded-none'}`} side={sheetSide}>
@@ -478,33 +482,35 @@ export default function DashboardPage() {
                 </h2>
               </div>
               <div className={`${sheetSide === 'bottom' ? 'px-4 py-4' : 'p-6'} pt-4 overflow-y-auto flex-1`}>
-                <CategoryManager 
-                  categories={categories} 
-                  onAddCategory={addCategory}
-                  onEditCategory={(oldName, newName) => {
-                     // Update category name in tasks
-                     const tasksToUpdate = tasks.filter(task => task.category === oldName);
-                     tasksToUpdate.forEach(task => {
-                       updateTask(task.id, { category: newName });
-                     });
-                     
-                     // Update categories list
-                     editCategory(oldName, newName);
-                   }}
-                  onArchiveCategory={(categoryName) => {
-                     // Remove category from categories list
-                     removeCategory(categoryName);
-                     
-                     // Update tasks to remove the category (set to empty string)
-                     const tasksToUpdate = tasks.filter(task => task.category === categoryName);
-                     tasksToUpdate.forEach(task => {
-                       updateTask(task.id, { category: '' });
-                     });
-                   }}
-                  canEditCategory={canEditCategory}
+                <Suspense fallback={<div className="flex items-center justify-center p-8"><div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div></div>}>
+                  <CategoryManager 
+                    categories={categories} 
+                    onAddCategory={addCategory}
+                    onEditCategory={(oldName, newName) => {
+                       // Update category name in tasks
+                       const tasksToUpdate = tasks.filter(task => task.category === oldName);
+                       tasksToUpdate.forEach(task => {
+                         updateTask(task.id, { category: newName });
+                       });
+                       
+                       // Update categories list
+                       editCategory(oldName, newName);
+                     }}
+                    onArchiveCategory={(categoryName) => {
+                       // Remove category from categories list
+                       removeCategory(categoryName);
+                       
+                       // Update tasks to remove the category (set to empty string)
+                       const tasksToUpdate = tasks.filter(task => task.category === categoryName);
+                       tasksToUpdate.forEach(task => {
+                         updateTask(task.id, { category: '' });
+                       });
+                     }}
+                    canEditCategory={canEditCategory}
                   canRemoveCategory={canRemoveCategory}
                   tasks={tasks}
                 />
+                </Suspense>
               </div>
             </div>
           </SheetContent>
@@ -519,30 +525,36 @@ export default function DashboardPage() {
                 <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-accent/5 rounded-2xl" />
                 <div className="relative">
                   {activeModal === 'manual' && (
-                    <ManualTaskForm
-                      onTaskCreated={handleManualTaskCreated}
-                      onCancel={() => setActiveModal(null)}
-                      categories={categories}
-                      onAddCategory={addCategory}
-                    />
+                    <Suspense fallback={<div className="flex items-center justify-center p-8"><div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div></div>}>
+                      <ManualTaskForm
+                        onTaskCreated={handleManualTaskCreated}
+                        onCancel={() => setActiveModal(null)}
+                        categories={categories}
+                        onAddCategory={addCategory}
+                      />
+                    </Suspense>
                   )}
                   
                   {activeModal === 'text' && (
-                    <div>
-                      <h3 className="text-lg font-semibold mb-4 bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
-                        Text to Tasks
-                      </h3>
-                      <TextToTasksForm onTasksCreated={handleTasksCreated} categories={categories} />
-                    </div>
+                    <Suspense fallback={<div className="flex items-center justify-center p-8"><div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div></div>}>
+                      <div>
+                        <h3 className="text-lg font-semibold mb-4 bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
+                          Text to Tasks
+                        </h3>
+                        <TextToTasksForm onTasksCreated={handleTasksCreated} categories={categories} />
+                      </div>
+                    </Suspense>
                   )}
                   
                   {activeModal === 'transcript' && (
-                    <div>
-                      <h3 className="text-lg font-semibold mb-4 bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
-                        Transcript to Tasks
-                      </h3>
-                      <TranscriptToTasksForm onTasksCreated={handleTasksCreated} categories={categories} />
-                    </div>
+                    <Suspense fallback={<div className="flex items-center justify-center p-8"><div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div></div>}>
+                      <div>
+                        <h3 className="text-lg font-semibold mb-4 bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
+                          Transcript to Tasks
+                        </h3>
+                        <TranscriptToTasksForm onTasksCreated={handleTasksCreated} categories={categories} />
+                      </div>
+                    </Suspense>
                   )}
                 </div>
               </div>

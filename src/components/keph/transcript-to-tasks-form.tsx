@@ -53,12 +53,21 @@ export function TranscriptToTasksForm({ onTasksCreated, categories }: Transcript
       const result = await transcriptToTasks({...values, categories: categories || []});
       onTasksCreated(result.tasks);
       form.reset();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error generating tasks from transcript:', error);
+      
+      let errorMessage = 'Failed to generate tasks from transcript. Please try again.';
+      
+      if (error?.message?.includes('429') || error?.message?.includes('quota')) {
+        errorMessage = 'AI is busy right now (Quota limit). Please wait a moment and try again.';
+      } else if (error?.message?.includes('network') || error?.message?.includes('fetch')) {
+        errorMessage = 'Network error. Please check your connection and try again.';
+      }
+
       toast({
         variant: 'destructive',
-        title: 'Error',
-        description: 'Failed to generate tasks from transcript. Please try again.',
+        title: 'Generation Failed',
+        description: errorMessage,
       });
     } finally {
       setIsSubmitting(false);

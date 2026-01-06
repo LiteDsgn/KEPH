@@ -25,18 +25,18 @@ const ToastViewport = React.forwardRef<
 ToastViewport.displayName = ToastPrimitives.Viewport.displayName
 
 const toastVariants = cva(
-  "group pointer-events-auto relative flex w-full items-center justify-between space-x-4 overflow-hidden rounded-2xl border-transparent p-6 pr-8 shadow-lg transition-all data-[swipe=cancel]:translate-x-0 data-[swipe=end]:translate-x-[var(--radix-toast-swipe-end-x)] data-[swipe=move]:translate-x-[var(--radix-toast-swipe-move-x)] data-[swipe=move]:transition-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[swipe=end]:animate-out data-[state=closed]:fade-out-80 data-[state=closed]:slide-out-to-right-full data-[state=open]:slide-in-from-top-full data-[state=open]:sm:slide-in-from-bottom-full bg-card/60 backdrop-blur-xl",
+  "group pointer-events-auto relative flex w-full items-center justify-between space-x-4 overflow-hidden rounded-2xl p-6 pr-8 shadow-lg transition-all data-[swipe=cancel]:translate-x-0 data-[swipe=end]:translate-x-[var(--radix-toast-swipe-end-x)] data-[swipe=move]:translate-x-[var(--radix-toast-swipe-move-x)] data-[swipe=move]:transition-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[swipe=end]:animate-out data-[state=closed]:fade-out-80 data-[state=closed]:slide-out-to-right-full data-[state=open]:slide-in-from-top-full data-[state=open]:sm:slide-in-from-bottom-full backdrop-blur-xl border border-white/[0.08]",
   {
     variants: {
       variant: {
         default:
-          "border-border/30 text-foreground",
+          "bg-card/60 text-foreground",
         destructive:
-          "destructive group border-destructive/50 bg-destructive/20 text-destructive-foreground",
+          "bg-destructive/10 text-white border-destructive/20",
         success:
-          "success group border-emerald-500/50 bg-emerald-500/20 text-emerald-foreground",
+          "bg-emerald-500/10 text-white border-emerald-500/20",
         info:
-          "info group border-sky-500/50 bg-sky-500/20 text-sky-foreground",
+          "bg-sky-500/10 text-white border-sky-500/20",
       },
     },
     defaultVariants: {
